@@ -1,0 +1,1517 @@
+================================================================================
+MASTER BUILD PROMPT: ALL-INDIA MULTI-CITY LOCAL BUSINESS DIRECTORY PLATFORM
+Version: 2.0 | Scope: National | Type: Full Product Specification
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 0: PLATFORM DECLARATION — READ FIRST, NON-NEGOTIABLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This is a multi-city, all-India local business directory platform.
+
+It covers:
+- All 28 states and 8 union territories (36 total)
+- All 780+ districts
+- All 4,000+ cities and towns
+- All 19,000+ unique India Post pincodes
+- Potentially millions of individual business listings
+
+THIS IS NOT A SINGLE-CITY TOOL.
+THIS IS NOT A REGIONAL TOOL.
+THIS IS NATIONAL INFRASTRUCTURE.
+
+Every single architectural, database, SEO, performance, URL, and design
+decision made during development must be evaluated against this scale
+from day one. Retrofitting national scale onto a single-city architecture
+is one of the most expensive mistakes in web platform development.
+Do not build small and scale later. Build for scale now, launch with less data.
+
+GEOGRAPHIC HIERARCHY OF INDIA (memorize this, it drives everything):
+
+  Level 1: Country        → India
+  Level 2: State / UT     → 36 entities (e.g., Andaman and Nicobar Islands)
+  Level 3: District       → 780+ (e.g., South Andaman)
+  Level 4: City / Town    → 4,000+ (e.g., Port Blair)
+  Level 5: Locality/Area  → Variable (e.g., Phoenix Bay)
+  Level 6: Pincode        → 19,000+ (e.g., 744101)
+
+Every level is a first-class SEO asset. Every level gets its own page type.
+No level is skipped or collapsed into another without explicit justification.
+
+SCALE IMPLICATIONS THAT MUST BE ADDRESSED BEFORE WRITING A SINGLE LINE OF CODE:
+- Total indexable pages will exceed 1,000,000 (one million) at full data load
+- XML sitemaps have a 50,000 URL limit — sitemap index files are mandatory
+- Database queries touching all listings must be paginated at the query level
+- No full-table scans in production under any circumstance
+- Static generation or aggressive caching is required for all geographic pages
+- Search indexing must be handled by a dedicated search layer, not raw DB queries
+
+PRIMARY LANGUAGE: English (Phase 1)
+MULTILINGUAL: Declared as Phase 2 — architecture must not block this
+COUNTRY CODE: IN
+CURRENCY: INR (₹)
+PHONE FORMAT: Indian 10-digit mobile, optional +91 prefix
+SEARCH ENGINE TARGET: Google (96%+ market share in India)
+COMPETITOR AWARENESS: JustDial (DA ~70), Sulekha (DA ~60), IndiaMart (DA ~70),
+  TradeIndia, Yellow Pages India — your SEO strategy must acknowledge these
+  competitors dominate head terms; your advantage is depth, freshness,
+  and hyper-local long-tail coverage they cannot scale to match.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1: DATA CONTRACT — SINGLE SOURCE OF TRUTH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Each business listing is a structured record with the following canonical schema.
+All optional fields may be null or empty. The system must handle every null state
+gracefully. A listing with only name + category + address + city is a valid,
+displayable, indexable page.
+
+FIELD DEFINITIONS:
+
+  id                (string, unique, required)
+  name              (string, required)
+  category          (string, required)
+  subcategory       (string, nullable)
+  address           (string, required — street + locality level)
+  city              (string, required)
+  district          (string, required — must be added to data pipeline)
+  state             (string, required)
+  pincode           (string, required — 6-digit India Post format)
+  phone_numbers     (array of strings, may be empty array)
+  email             (string, nullable)
+  website           (string, nullable)
+  google_map_link   (string, nullable)
+  coordinates       (object {lat, lng}, nullable)
+  source_url        (string)
+  canonical_url     (string, required)
+  seo_title         (string, required)
+  seo_description   (string, required)
+  seo_keywords      (string, nullable)
+  opening_hours     (string, nullable)
+  payment_methods   (string, nullable)
+  features          (array of {feature, description}, may be empty)
+  faqs              (array of {question, answer}, may be empty)
+  about_text        (string, nullable)
+
+DATA QUALITY REALITY CHECK FOR INDIA:
+At India scale, the following null rates are normal and expected.
+The system must not appear broken when these fields are missing:
+- phone_numbers empty: expected in 30–50% of listings
+- email null: expected in 60–80% of listings
+- website null: expected in 70–85% of listings
+- coordinates null: expected in 40–60% of listings
+- google_map_link null: expected in 40–60% of listings
+The platform must look complete and trustworthy even with minimal data fields.
+
+DATA NORMALIZATION RULES (apply at ingest, before storage):
+
+  PHONE NUMBER NORMALIZATION:
+  - Strip all spaces, dashes, brackets from raw input
+  - Accept formats: 9876543210 / +919876543210 / 09876543210 / 91-9876543210
+  - Normalize all to: +91XXXXXXXXXX (E.164 format) for storage
+  - Display as: +91 98765 43210 (human-readable, formatted)
+  - Validate: must be 10 digits after stripping country code and leading zero
+  - Reject: numbers that do not pass this validation, log for review
+  - Handle arrays: some listings have multiple phone numbers — display all
+
+  ADDRESS NORMALIZATION:
+  - Indian addresses are highly inconsistent — do not enforce strict formatting
+  - Store raw address string as-is from source
+  - Separately store and index: city, district, state, pincode as discrete fields
+  - These four fields must always be clean, validated, and structured
+  - Never store city/state/pincode inside the address string as the only copy
+
+  PINCODE VALIDATION:
+  - Must be exactly 6 digits
+  - Must begin with a digit between 1 and 9 (no leading zero)
+  - Cross-reference against India Post pincode database where possible
+  - Store pincode as string, never integer (leading zeros, though rare, exist)
+  - Pincode must be associated with its correct city, district, and state
+  - If pincode does not match city/state on record, flag for review
+
+  BUSINESS NAME NORMALIZATION:
+  - Store original casing from source
+  - Generate slug in lowercase with hyphens: "AUTO SOLUTIONS" → "auto-solutions"
+  - Slug must be unique per city — if collision, append id suffix
+  - Handle names in regional scripts — store as-is, slug from transliteration
+
+  CATEGORY NORMALIZATION:
+  - Maintain a master category taxonomy (defined separately)
+  - Map all incoming category strings to canonical taxonomy entries
+  - Every listing must have exactly one canonical category
+  - Subcategory is optional but must also map to taxonomy if present
+
+  DUPLICATE DETECTION:
+  - At India scale, duplicate listings are inevitable and frequent
+  - Detect duplicates on ingest using: name similarity + address + pincode
+  - Flag suspected duplicates for review — do not auto-delete
+  - Canonical listing selection: prefer the record with more non-null fields
+  - Merged records must retain all source URLs
+  - Display only one canonical listing per unique business
+
+  AUTO-GENERATED CONTENT POLICY:
+  - Features and FAQs in the data are system-generated
+  - This is a known trust risk (automation bias reversal)
+  - NEVER display hedging language to users:
+    Forbidden phrases: "may provide", "possibly", "might be",
+    "could offer", "perhaps", "we believe", "generally"
+  - If data is uncertain → omit the claim entirely
+  - Differentiate auto-generated content from business-verified content visually
+  - Build a listing claim flow in Phase 2 for businesses to verify/edit their data
+  - Display "Last updated: {date}" on every listing without exception
+
+NULL STATE HANDLING RULES (exhaustive):
+  - phone_numbers empty → hide call CTA entirely, no empty field shown
+  - email null → hide email button entirely
+  - website null → hide website button entirely
+  - google_map_link null AND coordinates null → hide map section entirely,
+    show full address as text only
+  - coordinates null but google_map_link exists → link to Google Maps, no embed
+  - opening_hours null → hide hours section entirely
+  - payment_methods null → hide payment section entirely
+  - features array empty → hide features section AND its H2 heading
+  - faqs array empty → hide FAQ section AND its H2 heading
+  - about_text null → hide about section AND its H2 heading
+  - All contact buttons null → replace sticky CTA bar with address bar only
+  RULE: Never render a section heading without content beneath it.
+  RULE: Never render an empty field, dash, "N/A", or placeholder for missing data.
+  RULE: A page with only name + category + address must look complete, not broken.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2: INFORMATION ARCHITECTURE & URL STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PAGE TYPE HIERARCHY:
+
+  TYPE 1:  HOMEPAGE                  /
+  TYPE 2:  STATE PAGE                /{state-slug}/
+  TYPE 3:  DISTRICT PAGE             /{state-slug}/{district-slug}/
+  TYPE 4:  CITY PAGE                 /{city-slug}/
+  TYPE 5:  CATEGORY PAGE             /{city-slug}/{category-slug}/
+  TYPE 6:  SUBCATEGORY PAGE          /{city-slug}/{category-slug}/{sub-slug}/
+  TYPE 7:  PINCODE PAGE              /pincode/{pincode}/
+  TYPE 8:  BUSINESS DETAIL PAGE      /{listing-id}/{business-slug}/
+  TYPE 9:  SEARCH RESULTS PAGE       /search?q=...&city=...&category=...
+  TYPE 10: NEAR ME PAGE              /{city-slug}/near-me/
+  TYPE 11: TAG PAGE                  /tag/{tag-slug}/
+
+  WHY DISTRICT PAGES MATTER:
+  District-level pages target real search queries:
+  "businesses in South Andaman District"
+  "auto parts shops in South Andaman"
+  These are low-competition queries that established competitors do not serve
+  well. District pages are a structural SEO advantage — build them.
+
+URL CONSTRUCTION RULES:
+
+  SLUG RULES:
+  - All slugs: lowercase, hyphen-separated, ASCII-safe
+  - No special characters, no underscores, no dots
+  - No trailing slashes inconsistency — decide one standard and enforce it
+    (recommended: trailing slash on all directory pages, no trailing slash
+    on detail pages — match this to your canonical tags exactly)
+  - Slugs must be stable — changing a slug breaks inbound links and rankings
+  - State slug: "andaman-and-nicobar-islands"
+  - District slug: "south-andaman"
+  - City slug: "port-blair"
+  - Category slug: "auto-parts-shops"
+  - Business slug: generated from name, collision-safe with id suffix
+
+  CITY vs STATE SLUG COLLISION RULE:
+  Some city names match state names or district names in India.
+  All city slugs must be globally unique in the URL namespace.
+  Resolution strategy: append district or state suffix when collision detected.
+  Example: if "aurangabad" exists in both Maharashtra and Bihar,
+  use "aurangabad-maharashtra" and "aurangabad-bihar"
+
+  CANONICAL URL RULES:
+  - Every page has exactly one canonical URL
+  - Canonical tag present on every page, pointing to itself
+  - Paginated pages: page 1 is canonical for the sequence
+  - All URL parameters (filters, sort) use ?param=value format
+  - Filter/sort URLs are NOT canonical — canonical always points to base URL
+  - www vs non-www: pick one, redirect the other, canonicalize to your choice
+  - HTTP must redirect to HTTPS on all URLs, always
+
+INTERNAL LINKING RULES:
+  - Every state page links to all its districts and top cities
+  - Every district page links to all its cities
+  - Every city page links to all its categories with listing counts
+  - Every category page links to its subcategories and sibling categories
+  - Every listing page links to: city page, category page, 5–8 related listings
+  - Every listing page must display breadcrumbs as functional HTML links
+  - No page more than 4 clicks from homepage
+  - Footer must contain sitemap-style links to all states and top categories
+    These must be real <a href=""> HTML links, never JavaScript-only
+
+BREADCRUMB RULES (Information Scent — Pirolli & Card, 1999):
+  Breadcrumbs are not decorative. They serve three simultaneous functions:
+  1. Navigation: user knows where they are and can backtrack
+  2. Information scent: user knows path to their goal
+  3. Structured data: BreadcrumbList schema signals hierarchy to Google
+
+  Format per page type:
+  State:      Home > Andaman and Nicobar Islands
+  District:   Home > Andaman and Nicobar Islands > South Andaman
+  City:       Home > Andaman and Nicobar Islands > Port Blair
+  Category:   Home > Port Blair > Auto Parts Shops
+  Listing:    Home > Port Blair > Auto Parts Shops > AUTO SOLUTIONS
+  Pincode:    Home > Port Blair > Pincode 744101
+
+  RULE: Breadcrumbs are HIGH PRIORITY, not nice-to-have.
+  RULE: Must be implemented as BreadcrumbList schema simultaneously.
+  RULE: Every non-homepage page must have breadcrumbs.
+
+SITEMAP STRATEGY (mandatory at India scale):
+  Google's sitemap limit: 50,000 URLs and 50MB per sitemap file.
+  At millions of pages, you need a sitemap index file.
+
+  SITEMAP INDEX: /sitemap.xml
+    → /sitemap-states.xml         (36 URLs)
+    → /sitemap-districts.xml      (780 URLs)
+    → /sitemap-cities.xml         (4,000+ URLs)
+    → /sitemap-categories.xml     (city × category combinations)
+    → /sitemap-pincodes.xml       (19,000+ URLs)
+    → /sitemap-listings-001.xml   (up to 50,000 listings)
+    → /sitemap-listings-002.xml   (next 50,000)
+    → /sitemap-listings-NNN.xml   (continue as needed)
+
+  Each sitemap file must include <lastmod> tag.
+  Update sitemap files incrementally on new listing addition.
+  Submit sitemap index to Google Search Console on launch.
+  Ping Google on sitemap updates: 
+    https://www.google.com/ping?sitemap=https://yourdomain.com/sitemap.xml
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3: USER PSYCHOLOGY & BEHAVIOR MODEL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CRITICAL PRINCIPLE: Users do not browse this platform for entertainment.
+They arrive with varying levels of urgency and intent. Every design decision
+must serve their goal, not the platform's desire to display information.
+
+THE THREE COGNITIVE USER MODES (Marchionini, 1995):
+
+  MODE 1 — KNOWN-ITEM SEEKING (High Intent, ~40% of users)
+    Internal state: "I need an auto parts shop in Port Blair right now"
+    Behavior: Lands deep via Google, needs address/phone in under 10 seconds
+    Design response: Contact info above fold, sticky CTA bar on mobile
+    Failure state: User cannot find phone number → exits → goes to competitor
+    Success metric: Time to first contact action < 10 seconds
+
+  MODE 2 — EXPLORATORY SEEKING (Medium Intent, ~35% of users)
+    Internal state: "What options are available for auto parts in Port Blair?"
+    Behavior: Scans category pages, compares 3–5 listings, reads details
+    Design response: Rich scannable listing cards, clear differentiation between
+    listings, easy navigation between results
+    Success metric: User views 3+ listings before making decision or exiting
+
+  MODE 3 — DISCOVERY (Low/No Intent, ~25% of users)
+    Internal state: "I wonder what businesses are in my area"
+    Behavior: Follows links, browses categories, no specific goal
+    Design response: Popular/trending sections, "near me" features,
+    related listings, category exploration paths
+    Success metric: Session depth > 4 pages, return visit
+
+  THE INTERFACE MUST SERVE ALL THREE MODES SIMULTANEOUSLY.
+  Do not design only for Mode 1 (the most obvious use case).
+
+SYSTEM 1 vs SYSTEM 2 THINKING (Kahneman, 2011):
+  Directory users operate primarily in System 1 — fast, automatic, heuristic.
+  They are not reading carefully. They are scanning and pattern-matching.
+  Design implications:
+  - Use familiar, conventional layouts — novelty increases cognitive friction
+  - High contrast, large text, simple language — zero friction
+  - Format hours as "9 AM – 6 PM" not "09:00:00 – 18:00:00"
+  - Format addresses in natural reading order, not database order
+  - Category names must be plain language ("Auto Parts Shops" not "Automotive
+    Components Retail Establishments")
+  - Round numbers, simple words, conventional icons throughout
+
+COGNITIVE LOAD (Sweller, 1988):
+  Three types of load to manage:
+  - Intrinsic load = complexity of the business data itself (unavoidable)
+  - Extraneous load = unnecessary UI complexity → MINIMIZE AGGRESSIVELY
+  - Germane load = pattern recognition, mental model building → SUPPORT THIS
+
+  Rules:
+  - Never display more than 7 pieces of distinct information simultaneously
+    in one visual unit
+  - Group related information into visual chunks (Gestalt proximity)
+  - Progressive disclosure: show less on listing cards, more on detail pages
+  - Each page type has one primary purpose — do not mix purposes
+
+HICK'S LAW — Decision Time:
+  Formula: RT = a + b × log₂(n + 1)
+  Every additional choice increases decision time logarithmically.
+  - Homepage categories visible without scrolling: maximum 8
+  - Primary navigation items: maximum 6
+  - Filter dimensions visible simultaneously: maximum 5
+  - CTAs visible on any single view: maximum 3
+  - Never present unlimited options without grouping or progressive reveal
+
+FITTS'S LAW — Target Acquisition:
+  Formula: MT = a + b × log₂(2D/W)
+  Smaller and farther targets take exponentially longer to tap accurately.
+  - All interactive elements: minimum 44×44 CSS pixels (logical pixels)
+  - Primary CTAs (Call, Directions): minimum 48×48 CSS pixels
+  - Mobile thumb zone: bottom 40% of screen = easiest reach
+  - Primary CTAs must be in the thumb zone on mobile
+  - Never place primary actions in top corners on mobile screens
+
+SERIAL POSITION EFFECT — Primacy & Recency:
+  Users remember the first and last items in any list best.
+  - First listing on a category page receives disproportionate attention
+  - Last listing on a paginated page is also recalled more than middle items
+  - Apply this to monetization logic: first position has highest value
+  - Never randomize listing order without a clear documented rationale
+  - Default sort order must be defensible and consistent
+
+TRUST PSYCHOLOGY (McKnight et al., 2002):
+  Users are making real-world decisions: visiting physical locations,
+  calling phone numbers, spending money. Trust is functionally required.
+  
+  Required trust signals per listing:
+  → "Last updated: {date}" — always visible, never hidden
+  → Data source indicator (where this data came from)
+  → Verified badge when phone/address has been confirmed
+  → Distinction between auto-generated and business-verified content
+  → Clear indication if a listing has been claimed by the business owner
+
+  AUTOMATION BIAS REVERSAL — CRITICAL RISK:
+  When users detect that content is auto-generated (and they will detect it),
+  they stop trusting ALL content on the page — including real, accurate data
+  like the address and phone number. This is not a minor UX issue.
+  This is a conversion-killing trust failure.
+  
+  Mandatory countermeasures:
+  - Never use hedging language in auto-generated content that users will see
+  - Never write "AUTO SOLUTIONS may provide value-added services"
+  - If a claim cannot be verified, do not make it
+  - Visually mark auto-generated sections differently from verified data
+  - Build a listing claim flow so businesses can replace generated content
+  - A listing that is claimed by its owner should look different from
+    an unclaimed listing
+
+INFORMATION FORAGING (Pirolli & Card, 1999):
+  Users follow "information scent" — they click only when the link clearly
+  leads closer to their goal. Weak scent = user abandons.
+  - Every link must communicate exactly what the user will find after clicking
+  - Forbidden CTAs: "Learn More", "Click Here", "Read More"
+  - Required CTAs: "See all Auto Parts Shops in Port Blair",
+    "View Address and Contact Details", "Get Directions"
+  - Breadcrumbs maintain scent for deep-landing users from search engines
+  - Category names in navigation must match user's mental model, not
+    internal taxonomy naming conventions
+
+PARADOX OF CHOICE (Schwartz, 2004):
+  Beyond 6–8 visible options, decision paralysis measurably increases.
+  - Category grid on homepage: maximum 8 visible, "Browse All" for the rest
+  - Filter options: group into collapsible sections if more than 5 options
+  - Related listings section: show 4–6, never more than 8
+
+AESTHETIC-USABILITY EFFECT (Kurosu & Kashimura, 1995):
+  Users perceive visually clean interfaces as more functional and trustworthy,
+  even when functionally identical to cluttered ones.
+  A listing with 3 complete, cleanly rendered fields outperforms a listing
+  with 10 fields where 7 are empty, dashed, or showing "N/A".
+  Every empty field shown destroys perceived quality disproportionately.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4: VISUAL HIERARCHY & SCANNING SCIENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EYE-TRACKING & SCANNING PATTERNS (Nielsen, 2006):
+  Users scan listing cards and search results in an F-pattern:
+  - Full horizontal scan across the top (business name)
+  - Partial horizontal scan across the middle (address/category)
+  - Vertical scan down the left edge (icons/labels)
+  
+  Design implications:
+  - Business name: TOP LEFT — highest attention zone — always
+  - CTA button: TOP RIGHT on desktop, FULL-WIDTH BOTTOM on mobile
+  - Secondary info: middle row, left-anchored
+  - Icons: left edge, consistent position across all cards
+  - Never place critical information in bottom-right of a card
+  - CTA on bottom-right of listing card is one of the most common
+    directory design mistakes — it is in the lowest attention zone
+
+PRE-ATTENTIVE PROCESSING (Treisman & Gelade, 1980):
+  The brain processes color, size, shape, and contrast in under 250ms,
+  before conscious attention begins. Use these attributes deliberately:
+  - COLOR: Assign a consistent color to each major category
+    Use color to identify category at a glance — not to decorate
+  - SIZE: Business name largest, category medium, metadata smallest
+  - CONTRAST: Primary CTA must have highest contrast ratio on page
+  - SHAPE: Category icons must be distinct shapes, not just color variations
+  - RULE: Never use color alone to convey meaning (accessibility)
+  - RULE: Icon + text label always (icon alone is ambiguous)
+
+WHITESPACE (Ling & van Schaik, 2002):
+  Research shows whitespace increases reading comprehension by up to 20%.
+  Whitespace is not empty space — it is an active comprehension tool.
+  - Minimum 16px padding inside all card components
+  - Minimum 24px gap between listing cards in a grid
+  - Minimum 32px vertical gap between sections on detail pages
+  - Minimum line height: 1.5× the font size for all body text
+  - Section headings: 40px+ space above, 16px+ space below
+
+HEADING HIERARCHY (strict, one H1 per page):
+  - H1: Primary subject of the page (exactly one per page)
+        → Homepage: Platform name/tagline
+        → City page: "Businesses in Port Blair"
+        → Category page: "Auto Parts Shops in Port Blair"
+        → Listing page: "AUTO SOLUTIONS"
+  - H2: Major sections (About, Contact, Features, FAQs, Related Listings)
+  - H3: FAQ questions, Feature titles, subsection content
+  - H4+: Avoid in directory context
+  - Heading hierarchy must be semantically correct for both screen readers
+    and search engine crawlers — do not use headings for visual styling
+
+TYPOGRAPHY RULES:
+  - Body text: 16px minimum on mobile, 15px minimum on desktop
+  - Never use font weight below 400 for body text
+  - Maximum line length: 65–75 characters for body paragraphs
+  - Category and metadata labels: 12–14px, medium weight (500), muted color
+  - Business name on detail page: 22–28px, bold (700), high contrast
+  - Business name on listing card: 16–18px, semi-bold (600)
+  - Font choice: system fonts or a single well-loaded web font
+  - Never load more than 2 font families in total
+
+COLOR & CONTRAST:
+  - Body text on white background: minimum 4.5:1 contrast ratio (WCAG AA)
+  - Large text (18px+ or 14px+ bold): minimum 3:1 contrast ratio
+  - CTA buttons: minimum 4.5:1 contrast ratio, higher preferred
+  - Test all color combinations with WCAG contrast checker before finalizing
+  - Muted/secondary text (metadata, timestamps): minimum 3:1 against background
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5: PAGE-BY-PAGE SPECIFICATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+━━━━━━━━━━━━━━━━━━━━
+5A. HOMEPAGE
+━━━━━━━━━━━━━━━━━━━━
+
+PURPOSE: Serve all three user cognitive modes simultaneously.
+         Entry point for direct traffic, brand searches, generic queries.
+
+ABOVE THE FOLD (zero scrolling required on all device sizes):
+  - Platform logo/name
+  - Single hero headline: clear value proposition for India ("Find Any Local
+    Business Across India — Instantly")
+  - Dual search bar:
+      Field 1: [What? — Business name, category, keyword]
+      Field 2: [Where? — City, district, pincode, or "Use my location"]
+  - Search button: large, high contrast, full-width on mobile
+  - Placeholder text must be specific and instructive:
+      Field 1: "e.g. Auto Parts, Dentist, Restaurants..."
+      Field 2: "e.g. Port Blair, 744101, Mumbai..."
+  - Nothing else above the fold. No banner ads, no popups, no promotional
+    content. The search bar is the entire product at first glance.
+
+BELOW THE FOLD — SECTION ORDER:
+
+  1. POPULAR CATEGORIES
+     - Icon grid: maximum 8 visible without scrolling
+     - Each tile: icon + category name + total listing count nationally
+     - Tap/click target: entire tile, not just text
+     - "Browse All Categories" link below grid
+     - Icons must be visually distinct shapes (not color-only differentiation)
+     - Category selection opens city-selector or goes to category landing page
+
+  2. BROWSE BY STATE (Mode 2 and 3 entry point)
+     - Grid or list of all 36 states and UTs
+     - Each entry: state name + listing count
+     - This is also a primary SEO internal linking asset
+     - Must be real HTML links, never JavaScript-only rendered
+
+  3. POPULAR CITIES
+     - Show 12–16 major cities with listing counts
+     - Include metro cities + tier-2 representation
+     - Link to city page
+     - Not personalized in Phase 1
+
+  4. RECENTLY ADDED OR FEATURED LISTINGS
+     - 6 listing cards maximum
+     - Serves Mode 3 (discovery) users
+     - Rotated periodically, not real-time
+
+  5. FOOTER (SEO infrastructure + navigation)
+     - Links to all 36 states
+     - Links to all major categories
+     - Links to top 20–30 cities
+     - About, Contact, Privacy Policy, Terms
+     - These links are crawlable SEO assets — must be standard HTML links
+
+SEO FOR HOMEPAGE:
+  Title: "{Platform Name} — Local Business Directory for All of India"
+  Description: Unique, benefit-led, 145–155 characters
+  Schema: WebSite with SearchAction (Sitelinks Searchbox eligibility)
+  Canonical: Self-canonical, exactly one version of homepage URL
+
+━━━━━━━━━━━━━━━━━━━━
+5B. STATE PAGE
+━━━━━━━━━━━━━━━━━━━━
+
+PURPOSE: Geographic hub for an entire state/UT.
+         Targets queries like "businesses in Andaman and Nicobar Islands".
+         Entry point for users exploring a new state.
+
+URL: /{state-slug}/   e.g. /andaman-and-nicobar-islands/
+
+LAYOUT:
+  - H1: "Local Businesses in {State Name}"
+  - Intro paragraph: 2–4 sentences, unique per state (not templated),
+    mention major cities, notable categories, geographic context
+  - District grid: all districts in this state with listing counts
+  - Top Cities within state: listing count per city, link to city page
+  - Top Categories across this state: category name + count
+  - Featured Listings from this state: 6 listing cards
+  - Breadcrumb: Home > {State Name}
+
+SEO:
+  Title: "Local Businesses in {State} — City Directory India"
+  Description: Mention top 2–3 cities and categories in this state
+  Schema: BreadcrumbList
+  Internal links: all districts, all cities within state
+
+CONTENT RULE:
+  State page intro paragraph must be written uniquely per state.
+  Do not use a template with variable substitution.
+  Duplicate intro paragraphs across state pages will be detected as
+  thin/duplicate content by Google and will harm rankings.
+
+━━━━━━━━━━━━━━━━━━━━
+5C. DISTRICT PAGE
+━━━━━━━━━━━━━━━━━━━━
+
+PURPOSE: Hyper-local SEO for district-level queries.
+         Often underserved by competitors — structural advantage.
+         Targets: "businesses in South Andaman district"
+
+URL: /{state-slug}/{district-slug}/
+     e.g. /andaman-and-nicobar-islands/south-andaman/
+
+LAYOUT:
+  - H1: "Local Businesses in {District Name}, {State}"
+  - Intro: 2–3 sentences, unique per district
+  - Cities within district: grid with listing counts
+  - Top categories in district
+  - Featured listings from district
+  - Breadcrumb: Home > {State} > {District}
+
+SEO:
+  Title: "Businesses in {District}, {State} — Local Directory"
+  Description: Unique per district, mention main city and top category
+
+━━━━━━━━━━━━━━━━━━━━
+5D. CITY PAGE
+━━━━━━━━━━━━━━━━━━━━
+
+PURPOSE: Primary category hub for a specific city.
+         Main entry point for Mode 2 users exploring a city.
+         Targets: "businesses in Port Blair"
+
+URL: /{city-slug}/   e.g. /port-blair/
+
+LAYOUT:
+  - H1: "Local Businesses in {City Name}"
+  - Intro paragraph: unique per city, 2–4 sentences
+    Mention state, district, notable characteristics — not generic filler
+  - Category grid: all categories that have listings in this city
+    Each category tile: icon + name + listing count
+  - Quick-access subcategory chips below category grid
+  - Featured listings from this city: 6 cards
+  - Pincode quick-links for this city (all pincodes within city)
+  - Breadcrumb: Home > {State} > {City}
+
+SEO:
+  Title: "{City} Local Business Directory — Shops, Services & More"
+  Description: Unique per city, mention top 3 categories by listing count
+  Schema: BreadcrumbList + City entity where applicable
+  Internal links: all category pages within this city
+
+━━━━━━━━━━━━━━━━━━━━
+5E. CATEGORY PAGE (City + Category)
+━━━━━━━━━━━━━━━━━━━━
+
+PURPOSE: Primary SEO landing page for mid-tail queries.
+         "auto parts shops in Port Blair" → lands here.
+         Comparison and selection page for Mode 2 users.
+
+URL: /{city-slug}/{category-slug}/
+     e.g. /port-blair/auto-parts-shops/
+
+LAYOUT:
+  - H1: "{Category Name} in {City Name}"
+  - Result summary: "Showing {N} Auto Parts Shops in Port Blair"
+  - Filter and sort bar (see filter specification below)
+  - Listing card grid (see card specification below)
+  - Pagination controls
+  - Related categories section: "Also see: Auto Repair, Car Accessories"
+  - Breadcrumb: Home > {State} > {City} > {Category}
+
+LISTING CARD SPECIFICATION:
+
+  ANATOMY OF A CARD (desktop, F-pattern optimized):
+  ┌────────────────────────────────────────────────────┐
+  │ [Category Icon]  AUTO SOLUTIONS         [View →]  │  ← Top row: full attention
+  │                  Auto Parts Shops · Port Blair     │  ← Second row: context
+  │ 📍 Phoenix Bay   🕘 Opens 9 AM   💳 Cash          │  ← Third row: quick facts
+  └────────────────────────────────────────────────────┘
+
+  CARD RULES:
+  - Business name: top left, bold, 16–18px, truncate at 2 lines
+  - CTA "View Details →": top right, never bottom right
+    (bottom right is the lowest attention zone on an F-scan)
+  - Entire card is tappable/clickable, not just the button
+  - Icons only appear for fields that have data — never empty icon rows
+  - If all three quick-fact fields are null, hide the third row entirely
+  - Minimum card tap target height: 80px
+  - Hover/focus state: subtle border highlight or background shift
+  - Category badge: small chip, color-coded to category
+  - No truncation on address beyond 1 line — show what fits
+
+  MOBILE CARD:
+  - Full-width card
+  - CTA becomes bottom-right or inline below name
+  - Quick facts wrap to two lines if needed
+  - Minimum height: 72px
+
+FILTER SPECIFICATION:
+  - Available filters: Category (on city pages), Open Now toggle,
+    Payment Method, Sort By
+  - Each filter option shows result count: "Cash (34)"
+  - Options that would produce 0 results: visually disabled, not hidden
+    (hidden zero-result options confuse users about what filters exist)
+  - "Open Now" toggle only appears if opening_hours data exists for
+    more than 30% of listings in the current view
+  - Applied filters shown as removable chips above the result list
+  - All filter states reflected in URL parameters for shareability
+  - Filters must survive pagination and browser back navigation
+  
+  SORT OPTIONS:
+  - Relevance (default — most complete listing data ranked higher)
+  - Name A → Z
+  - Name Z → A
+  - Recently Added
+
+PAGINATION:
+  - 24 listings per page (divides evenly into 2, 3, or 4 column grids)
+  - Page number in URL: /port-blair/auto-parts-shops/?page=2
+  - Visible controls: Previous · 1 · 2 · 3 · … · N · Next
+  - Do NOT use infinite scroll. Reasons:
+    → Users cannot reach the footer
+    → Browser back button does not restore scroll position reliably
+    → Deep pages cannot be independently linked or indexed
+    → Users cannot gauge how many results exist
+
+━━━━━━━━━━━━━━━━━━━━
+5F. PINCODE PAGE
+━━━━━━━━━━━━━━━━━━━━
+
+PURPOSE: Hyper-local SEO. Captures area-specific and pincode-specific queries.
+         "shops in 744101", "businesses near Phoenix Bay Port Blair"
+         Low competition, high local intent — major ranking opportunity.
+
+URL: /pincode/{pincode}/   e.g. /pincode/744101/
+
+LAYOUT:
+  - H1: "Local Businesses in {Pincode} — {Locality/Area}, {City}"
+  - Intro: 2 sentences about this pincode area
+  - Category breakdown: all categories with listings in this pincode + counts
+  - All listings in this pincode (paginated, same card format)
+  - Nearby pincodes: link to adjacent pincodes
+  - Breadcrumb: Home > {State} > {City} > Pincode {Pincode}
+
+SEO:
+  Title: "{Pincode} {City} Business Directory — Local Shops & Services"
+  Description: Mention locality name, city, and top 2 categories
+
+━━━━━━━━━━━━━━━━━━━━
+5G. BUSINESS DETAIL PAGE — MOST IMPORTANT PAGE
+━━━━━━━━━━━━━━━━━━━━
+
+PURPOSE: Definitively answer every user question about one business.
+         Primary target for brand-name queries and location-specific searches.
+         Conversion page: user must be able to contact or visit the business.
+
+URL: /{listing-id}/{business-slug}/
+     e.g. /4138374/auto-solutions/
+
+MOBILE LAYOUT (single column — this is the primary layout):
+
+  STACKING ORDER IS NON-NEGOTIABLE:
+  1. Business Name (H1) + Category badge
+     Name must be visible immediately on page load, no scroll required
+  
+  2. STICKY BOTTOM ACTION BAR
+     Appears immediately, persists on scroll
+     Contains only buttons for data that exists:
+     [📞 Call] — only if phone_numbers non-empty
+     [📍 Directions] — only if google_map_link or coordinates exist
+     [🌐 Website] — only if website non-null
+     If no contact data exists: show [📋 Copy Address] only
+     Button labels must be text + icon (never icon-only)
+  
+  3. QUICK FACTS BAR (inline horizontal)
+     [🕘 Opens 9 AM] [💳 Cash] — only show items with data
+     If all quick facts null: hide this bar entirely
+  
+  4. ADDRESS BLOCK
+     Full formatted address, always visible, always shown
+     City, State, Pincode on separate line
+     "Copy Address" micro-action
+  
+  5. ABOUT SECTION (H2: "About AUTO SOLUTIONS")
+     about_text content
+     If null: hide section and heading entirely
+  
+  6. FEATURES SECTION (H2: "Features")
+     2-column icon card grid
+     Each card: icon + feature title (bold) + description (muted, smaller)
+     If features array empty: hide section and heading entirely
+  
+  7. MAP
+     If coordinates exist: show static map image, tap to open in Google Maps
+     If only google_map_link exists: show "Open in Google Maps" button
+     If both null: hide map section entirely
+     CRITICAL: Do NOT embed an iframe map on mobile — too heavy,
+     causes layout shift, drains data on slow Indian connections
+     Mobile map = tap-to-open link with a static preview image
+  
+  8. FAQ SECTION (H2: "Frequently Asked Questions")
+     Accordion component — all collapsed by default
+     Exception: first FAQ may be pre-expanded (highest-intent question)
+     Each item: question visible, answer revealed on expand
+     Proper ARIA states: aria-expanded="true/false"
+     If faqs array empty: hide section and heading entirely
+  
+  9. RELATED LISTINGS (H2: "Similar Businesses in Port Blair")
+     4–6 cards, horizontal scroll on mobile
+     Algorithm: same city + same subcategory first, then same category
+     If fewer than 2 related listings exist: hide section entirely
+     Never show the current listing as a related listing
+  
+  10. BREADCRUMB
+      At bottom of content, above footer
+      Also in schema markup at page head
+
+DESKTOP LAYOUT (two columns — reconciled from mobile):
+
+  LEFT COLUMN (65% width — primary reading column):
+    - Business Name (H1) + Category badge + Verified/Claimed status
+    - About section
+    - Features grid (2 × N cards)
+    - FAQ accordion
+    - Related listings grid (3 columns)
+
+  RIGHT SIDEBAR (35% width — sticky on scroll):
+    - Contact action buttons:
+      [📞 Call Now] [📍 Get Directions] [🌐 Visit Website] [✉ Email]
+      Show only for non-null data fields
+    - Quick facts: Hours, Payment
+    - Full address block with Copy action
+    - Map embed (iframe acceptable on desktop — bandwidth less constrained)
+      Only if coordinates or google_map_link non-null
+    - Last updated date
+    - Share action
+
+  MOBILE ↔ DESKTOP RECONCILIATION:
+  The same content must appear in both layouts.
+  Use CSS layout techniques (grid/flexbox order property) to reorder.
+  NEVER duplicate HTML content for layout purposes.
+  Duplicate HTML = duplicate content in crawlers + maintenance burden.
+
+ERROR AND EMPTY STATE SPECIFICATIONS:
+  These are not edge cases. At India scale, they are common cases.
+  
+  Zero-result category page:
+  → Do not show empty results container
+  → Show: "No listings found for {Category} in {City} yet."
+  → Show: "Try these nearby categories: [Cat1] [Cat2] [Cat3]"
+  → Show: "Or browse all businesses in {City}"
+  
+  Zero-result search:
+  → Never show empty page
+  → Show: "No results for '{query}' in {city}"
+  → Show spelling suggestion if query appears misspelled
+  → Show: top 3 related categories as suggestions
+  → Show: nearby cities that do have results for this query
+  
+  Listing with all contact data null:
+  → Hide all contact CTAs
+  → Show only: name, category, address, breadcrumb
+  → Do not show empty contact section or empty button placeholders
+  → Show: "Information Limited — Help us improve this listing"
+    with a link to a feedback/correction form
+  
+  Page not found (404):
+  → Never show default server error page
+  → Show: platform header, navigation, "Listing not found" message
+  → Show: search bar pre-filled with business name extracted from URL slug
+  → Show: suggested listings from same city/category
+  → Return actual 404 HTTP status code (not 200 with error content)
+  
+  Map fails to load:
+  → Show address text as fallback, never broken iframe
+  → Reserve exact space for map to prevent layout shift (CLS)
+
+━━━━━━━━━━━━━━━━━━━━
+5H. SEARCH RESULTS PAGE
+━━━━━━━━━━━━━━━━━━━━
+
+PURPOSE: Dynamic query response. Serves exploratory and known-item users.
+
+URL: /search?q={query}&city={city}&category={category}&page={n}
+
+SEARCH BAR BEHAVIOR:
+  - Dual-field: [Keyword/Name/Category] + [City/Pincode/District]
+  - City field: autocomplete from known entities in database
+  - Keyword field: autocomplete from: category names, subcategories,
+    business names (top matches), landmark names
+  - Autocomplete suggestions appear after 2 characters
+  - Support bilingual input: English + Hindi transliteration for city names
+    (e.g., "Mumbai" and "Bombay" both resolve to the same city)
+  - Submit on Enter key or button click
+  - URL must update on search for shareability and back-button support
+
+RESULTS DISPLAY:
+  - H1: Results for "{query}" in {City} ({N} businesses found)
+  - Same listing card format as category pages
+  - Same filter and sort system
+  - Query terms highlighted in matching business names
+
+SEARCH RANKING ALGORITHM:
+  Apply in this priority order:
+  1. Exact business name match
+  2. Business name contains all query terms
+  3. Category exact match
+  4. Category contains query terms
+  5. City match (applied as hard filter, not ranking signal)
+  6. Subcategory match
+  7. Listing completeness score
+     (more non-null fields = higher rank among otherwise equal results)
+  
+  Document and version this algorithm.
+  Changes to ranking must be tracked and their impact measured.
+
+━━━━━━━━━━━━━━━━━━━━
+5I. NEAR ME PAGE
+━━━━━━━━━━━━━━━━━━━━
+
+PURPOSE: Capture "near me" search intent — one of India's fastest-growing
+         local search behaviors on mobile.
+
+URL: /{city-slug}/near-me/
+     e.g. /port-blair/near-me/
+
+BEHAVIOR:
+  - If user grants geolocation permission:
+    Sort listings by distance from device location
+    Show distance from user to each listing (if coordinates available)
+  - If user denies geolocation:
+    Show standard city listing, prompt to enable location
+    Never break the page on permission denial
+  - Category filter works on top of location-sorted results
+
+SEO NOTE:
+  "Near me" pages rank for "[category] near me" queries when Google
+  determines user is in that city. These pages have high conversion intent.
+  Ensure they load fast and show contact CTAs prominently.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6: SEO SPECIFICATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMPETITIVE CONTEXT — INDIA-SPECIFIC:
+  Your primary competitors and their approximate domain authority:
+  - JustDial: DA ~70 — strong in categories and city pages
+  - Sulekha: DA ~60 — strong in services and home categories
+  - IndiaMart: DA ~70 — strong in B2B and product categories
+  - IndiaYellowPages: DA ~50
+
+  HEAD TERM STRATEGY:
+  You will not outrank JustDial for "auto parts shop Mumbai" on day one.
+  Do not compete on head terms in the first 12 months.
+  Your SEO strategy must be:
+  - Depth over breadth: cover every city, every pincode, every subcategory
+  - Long-tail domination: "auto parts shops in Phoenix Bay Port Blair 744101"
+  - Freshness: regular data updates, "last updated" signals
+  - Technical excellence: faster load times, better schema, better UX
+  - Content uniqueness: unique page content at every level of geography
+  
+  Mid-tail target pattern (high volume, medium competition):
+  "{Category} in {City}" — build and optimize every combination
+  
+  Long-tail target pattern (low volume, low competition, high intent):
+  "{Business Name} {City}" — own the brand query for every listing
+  "{Category} in {Area/Locality} {City}" — locality-level pages
+
+SCHEMA MARKUP — REQUIRED:
+
+  On every Business Detail Page:
+  {
+    "@context": "https://schema.org",
+    "@type": "{MappedSpecificType}",
+    "name": "{name}",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "{address}",
+      "addressLocality": "{city}",
+      "addressRegion": "{state}",
+      "postalCode": "{pincode}",
+      "addressCountry": "IN"
+    },
+    "geo": {                          // Include ONLY if coordinates non-null
+      "@type": "GeoCoordinates",
+      "latitude": "{lat}",
+      "longitude": "{lng}"
+    },
+    "telephone": "{phone}",           // Include ONLY if phone_numbers non-empty
+    "email": "{email}",               // Include ONLY if email non-null
+    "url": "{website}",               // Include ONLY if website non-null
+    "openingHours": "{formatted}",    // Include ONLY if opening_hours non-null
+                                      // Format MUST be: "Mo-Fr 09:00-18:00"
+                                      // If closing time unknown: omit entirely
+                                      // Incomplete time strings are invalid schema
+    "paymentAccepted": "{methods}",   // Include ONLY if payment_methods non-null
+    "sameAs": ["{google_map_link}"]   // Include ONLY if google_map_link non-null
+  }
+
+  SCHEMA TYPE MAPPING:
+  Build a complete mapping table from your category taxonomy to schema.org types.
+  Examples:
+  "Auto Parts Shops"   → AutoPartsStore
+  "Restaurant"         → Restaurant
+  "Hospital"           → Hospital
+  "Pharmacy"           → Pharmacy
+  "Hotel"              → Hotel
+  "Bank"               → BankOrCreditUnion
+  "School"             → School
+  Default fallback: LocalBusiness (only when no specific type fits)
+  This table must be built before development begins.
+  Using generic LocalBusiness when a specific type exists reduces schema value.
+
+  Additional schema types required:
+  - BreadcrumbList: every page with breadcrumbs
+  - FAQPage + Question + Answer: listing pages with non-empty faqs
+  - WebSite + SearchAction: homepage (Sitelinks Searchbox)
+  - ItemList: category pages and search result pages
+
+  FAQ SCHEMA REALITY NOTE:
+  Google significantly reduced FAQ rich result display after 2023.
+  FAQ rich snippets now appear primarily for government and health websites.
+  For a business directory, do not expect FAQ schema to consistently
+  trigger rich results in SERPs.
+  The real value of FAQs is: semantic keyword coverage, NLP entity signals,
+  and increased dwell time — not direct rich result appearance.
+
+META TAGS — RULES:
+  Title tag: use seo_title field value exactly as provided
+  Meta description: use seo_description field value exactly as provided
+  Meta keywords: DO NOT implement. Deprecated since 2009, ignored by Google.
+    The seo_keywords field is for internal search use only, not page meta.
+  Robots: index, follow on all content pages
+  Robots: noindex on: /search? pages, /search?page=N pages,
+    filtered URLs with parameters, thin pages with < 3 listings
+
+OPEN GRAPH TAGS (required for social sharing):
+  og:title → same as page title tag
+  og:description → same as meta description
+  og:url → canonical URL of page
+  og:type → "place" for listing pages, "website" for others
+  og:locale → "en_IN"
+  og:site_name → platform name
+
+CANONICAL TAG RULES:
+  - Self-canonical on every page without exception
+  - Paginated pages: each page is self-canonical
+    (Google handles pagination via content signals, not rel=next/prev)
+  - Filter/sort URLs: canonical points to base unflitered URL
+    e.g. /port-blair/auto-parts-shops/?sort=name canonicalizes to
+         /port-blair/auto-parts-shops/
+  - www and non-www: canonicalize to one, redirect the other
+  - Trailing slash consistency: pick one standard, apply everywhere
+  - Never include changing parameters in canonical URLs
+
+CRAWLABILITY RULES:
+  - All primary navigation links: standard <a href=""> HTML
+  - JavaScript-rendered navigation: not acceptable for indexing-critical links
+  - robots.txt:
+    Allow: all content pages (state, district, city, category, listing, pincode)
+    Disallow: /search (search result pages — too many parameter combinations)
+    Disallow: /search?* (parameterized search pages)
+    Allow: /sitemap*.xml (explicitly allowed)
+  - No noindex on any content page with 3 or more listings
+  - Pages with 1–2 listings: evaluate for noindex vs. allowing to index
+  - The crawl budget at national scale is a real constraint
+    Help Googlebot by: fast server, clear sitemap, good internal linking
+
+NAP CONSISTENCY — NON-NEGOTIABLE:
+  NAP = Name, Address, Phone
+  These three values must be character-for-character identical:
+  - On the listing detail page
+  - In the schema markup
+  - In any other location they appear on the platform
+  Store canonical NAP strings in the data layer.
+  Never format them differently on different pages.
+  Even minor variations ("St." vs "Street") confuse crawlers and
+  reduce local SEO effectiveness.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 7: PERFORMANCE SPECIFICATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INDIA-SPECIFIC PERFORMANCE CONTEXT:
+  This platform primarily serves users in India on mobile devices.
+  Network conditions and devices vary dramatically by tier of city:
+  - Metro cities (Mumbai, Delhi, Bangalore): 4G/5G, mid-to-high range devices
+  - Tier-2 cities (Lucknow, Jaipur, Bhopal): 4G, mixed device quality
+  - Tier-3+ cities and islands (Port Blair): 3G/4G, older/low-end devices,
+    slower speeds, higher data-cost sensitivity
+  
+  Design for the worst realistic case, not the best case.
+  A user on a 10 Mbps connection in Port Blair on a budget Android device
+  is a primary user of this platform. Their experience must be acceptable.
+
+CORE WEB VITALS TARGETS (Google 2024 thresholds — not older 2-second rule):
+  LCP (Largest Contentful Paint):
+    Good: < 2.5 seconds
+    Needs improvement: 2.5–4.0 seconds
+    Poor: > 4.0 seconds
+    → Optimize: ensure LCP element (business name or hero image) loads first
+    → Preload critical resources, avoid LCP being a lazy-loaded image
+
+  INP (Interaction to Next Paint) — REPLACED FID in March 2024:
+    Good: < 200ms
+    Needs improvement: 200–500ms
+    Poor: > 500ms
+    → Optimize: minimize JavaScript execution on interaction
+    → Do not block main thread with heavy scripts during user interaction
+
+  CLS (Cumulative Layout Shift):
+    Good: < 0.1
+    Needs improvement: 0.1–0.25
+    Poor: > 0.25
+    → CRITICAL FOR DIRECTORY SITES: CLS is the most commonly failed metric
+    → Primary causes to eliminate:
+      - Images loading without defined width/height attributes
+      - Map embeds loading asynchronously and pushing content down
+      - Ad units loading and shifting layout
+      - Fonts causing text reflow (use font-display: swap)
+    → Every image must have explicit width and height set in HTML
+    → Every async-loaded block (map, ad) must have reserved space in CSS
+
+PAGE WEIGHT TARGETS:
+  Listing detail page total: < 500KB (uncompressed HTML + CSS + JS)
+  Category page total: < 400KB
+  Homepage total: < 600KB
+  
+  Images: serve WebP with JPEG fallback, AVIF where supported
+  Never load full-resolution images — serve appropriately sized variants
+  Use responsive images (srcset) for all listing images
+
+ADDITIONAL PERFORMANCE RULES:
+  - Lazy load all content below the fold: images, map embeds, related listings
+  - Never embed map iframes on mobile — use static image + tap-to-open link
+  - Paginate at query level: never fetch all listings then paginate client-side
+  - Dedicate a search index (e.g., Elasticsearch, Meilisearch, Typesense)
+    for text search — never run LIKE queries on the primary database
+  - Cache all geographic pages aggressively (state, district, city, category)
+    These pages change infrequently — CDN caching with long TTLs is appropriate
+  - Listing detail pages: cache with shorter TTL or on-demand invalidation
+  - Serve all pages over HTTPS
+  - Enable HTTP/2 or HTTP/3 on server
+  - Compress all text responses (gzip or brotli)
+  - Critical CSS inlined, non-critical CSS deferred
+  - JavaScript: defer all non-critical scripts
+  - Above-the-fold content must render without JavaScript execution
+
+LOADING STATE RULES:
+  - Skeleton screens preferred over spinners for content areas
+  - Skeleton shape must match the content it represents (not generic boxes)
+  - Maximum loading indicator display: 3 seconds
+  - If content is not ready in 3 seconds: show partial content +
+    continue loading remaining sections below
+  - Never show a fully blank page to a user at any point
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 8: INDIA-SPECIFIC PRODUCT RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PAYMENT METHOD DISPLAY:
+  Indian payment ecosystem is unique. Display payment methods with
+  India-specific context and icons where possible:
+  - UPI (PhonePe, Google Pay, Paytm, BHIM) — most important in India
+  - Cash — still dominant in tier-2/3 cities
+  - Credit/Debit Card
+  - Net Banking
+  - EMI
+  
+  If payment_methods field contains "Cash accepted":
+  → Display: "💵 Cash Accepted"
+  Also display: "Confirm UPI and card acceptance directly"
+  
+  UPI acceptance is a significant trust signal in India.
+  Seeing "UPI Accepted" reduces hesitation for Indian users.
+  Prompt businesses to confirm UPI acceptance when they claim their listing.
+
+PHONE NUMBER DISPLAY:
+  Raw display format: +91 98765 43210
+  Click behavior: tel:+919876543210 (E.164 format, no spaces)
+  If multiple phone numbers: show all, with "Primary" label on first
+  WhatsApp: if number is likely on WhatsApp, offer WhatsApp link
+  (wa.me/+91XXXXXXXXXX) — WhatsApp is heavily used for business in India
+
+REGIONAL AND LANGUAGE CONSIDERATIONS (Phase 1 — English only):
+  Even in an English-only Phase 1, accommodate:
+  - City name aliases: "Bombay" → Mumbai, "Madras" → Chennai,
+    "Calcutta" → Kolkata, "Bangalore" → Bengaluru
+    Store aliases in city table, resolve search to canonical city name
+  - Business names in regional scripts: store and display as-is
+    Slug generation must use transliteration, not character stripping
+  - Hindi transliteration for search: "auto parts ki dukan" should surface
+    "Auto Parts Shops" results (basic keyword matching)
+  
+  MULTILINGUAL PHASE 2 ARCHITECTURE NOTE:
+  The URL structure, database schema, and component architecture must
+  not block future multilingual implementation.
+  Do not hardcode English strings into database records.
+  Separate content from structure from presentation.
+  Plan for: Hindi (hi-IN), Tamil (ta-IN), Telugu (te-IN), Marathi (mr-IN)
+  as likely Phase 2 languages.
+  When Phase 2 comes: hreflang tags will be required on all pages.
+
+INDIA ADDRESS DISPLAY FORMAT:
+  Display address in this standard Indian postal format:
+  Line 1: {street address}
+  Line 2: {locality/area}
+  Line 3: {City} – {Pincode}
+  Line 4: {District}, {State}
+
+  Example:
+  35, Maulana Azad Road
+  Phoenix Bay
+  Port Blair – 744101
+  South Andaman, Andaman and Nicobar Islands
+
+  This matches the format Indian users read and recognize.
+  Do not display address as a single unformatted string.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 9: ACCESSIBILITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WCAG 2.1 AA COMPLIANCE IS REQUIRED — NOT OPTIONAL:
+
+  COLOR CONTRAST:
+  - Body text: minimum 4.5:1 against background
+  - Large text (18px+ or 14px+ bold): minimum 3:1
+  - CTA buttons: minimum 4.5:1, higher preferred
+  - Never convey meaning through color alone
+  - All icons must have text labels or aria-label attributes
+
+  KEYBOARD NAVIGATION:
+  - All interactive elements must be keyboard-navigable
+  - Tab order must follow visual reading order
+  - Focus indicators must be clearly visible (never remove without replacement)
+  - Accordion items must be operable via Enter and Space keys
+
+  SEMANTIC HTML:
+  - Use <button> for actions, <a> for navigation — never mix these
+  - Use proper list elements (<ul>/<ol>) for listing cards
+  - Use <nav> for navigation regions
+  - Use <main> for primary page content
+  - Use <aside> for sidebar content
+  - Form inputs must have associated <label> elements (not just placeholder)
+
+  IMAGES AND MEDIA:
+  - All images require descriptive alt text
+  - Decorative images: alt="" (empty alt, not missing)
+  - Business logo: alt="{Business Name} logo"
+  - Category icons: alt="" with accompanying visible text label
+
+  DYNAMIC CONTENT:
+  - Accordion panels: aria-expanded, aria-controls on triggers
+  - Search autocomplete: aria-autocomplete, aria-activedescendant
+  - Filter chips: aria-pressed for toggle states
+  - Loading states: aria-live regions for dynamic content updates
+
+  SCREEN READER TESTING:
+  Test with at minimum: NVDA (Windows), VoiceOver (iOS)
+  before launch. Not optional.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 10: NAVIGATION & PLATFORM BEHAVIOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PRIMARY NAVIGATION:
+  Maximum 6 items in primary nav.
+  Recommended: Home | Browse by City | Browse by Category | 
+               States | Pincode Search | [Search icon]
+  Active state clearly indicated on all navigation items.
+  Navigation must not require JavaScript to render or function.
+
+MOBILE NAVIGATION:
+  Test both options with real users before committing:
+  Option A: Hamburger menu (conventional, known pattern)
+  Option B: Bottom tab bar (thumb-friendly, increasingly standard)
+  Choose based on user testing data, not personal preference.
+  Do not use both simultaneously.
+
+SEARCH BAR PRESENCE:
+  Search bar or search icon must be accessible from every page.
+  Persistent in header across all page types.
+  On mobile: search icon that expands to full-width search bar.
+  Pre-fill search bar with current city when on a city or listing page.
+
+RESPONSIVE BREAKPOINTS:
+  Mobile: 320px – 767px (design-first for this range)
+  Tablet: 768px – 1199px
+  Desktop: 1200px and above
+
+  Mobile is the primary design surface.
+  Desktop layout is an enhancement, not the default.
+  Never use a separate m. subdomain — responsive design only.
+
+BROWSER BACK BUTTON:
+  Back button must return user to the same scroll position on listing pages.
+  Filters and sort state must persist on back navigation.
+  Search query must be preserved on back navigation.
+  This is a commonly broken behavior — test explicitly.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 11: CONTENT QUALITY STANDARDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ABOUT TEXT STANDARDS:
+  - Must be factually accurate — no fabricated claims
+  - Minimum 60 words, maximum 300 words for detail page
+  - Must naturally include: business name, category, city, pincode, hours
+  - Must not be keyword-stuffed or obviously templated
+  - Must read as natural, human-level prose
+  - If about_text is obviously a template with variable substitution and
+    generic filler, it must be rewritten before the listing goes live
+
+FAQ CONTENT STANDARDS:
+  - Questions must reflect real user search intent
+  - Answers must be concise: 2–4 sentences maximum
+  - First FAQ: highest-intent question ("Where is {name} located?")
+  - If a field is null (e.g., no phone number), the FAQ must not
+    pretend the information exists — say "contact them to inquire"
+  - Forbidden FAQ answer patterns:
+    "They may be able to help you with..."
+    "You might want to consider..."
+    "This business possibly offers..."
+  - If a true answer cannot be given: omit the question entirely
+
+STATE AND CITY PAGE CONTENT:
+  - Intro paragraphs must be unique per page
+  - Cannot be a template with city/state name swapped in
+  - Google treats near-identical paragraphs with swapped place names
+    as thin or duplicate content — this will harm rankings
+  - Each state and city page intro must contain unique geographic,
+    demographic, or commercial context about that specific location
+
+FRESHNESS SIGNALS:
+  - "Last updated: {date}" displayed on every listing page
+  - If data has not been verified or updated in > 12 months:
+    Show a "Help us keep this updated" prompt with correction form
+  - Outdated data destroys trust and increases bounce rate
+  - Build a data refresh pipeline for high-traffic listings
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 12: ANALYTICS & MEASUREMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PRINCIPLE: Define success metrics before building features.
+A feature without a measurable success criterion is a guess, not a product.
+
+EVENTS TO TRACK ON BUSINESS DETAIL PAGE:
+  - Page view (with: city, state, category, listing_id)
+  - Phone number click (call intent)
+  - Directions click
+  - Website click
+  - Email click
+  - Address copy action
+  - FAQ accordion open (which question, position in list)
+  - Scroll depth (25%, 50%, 75%, 100%)
+  - Time on page / dwell time
+  - Related listing click (which listing, which position)
+  - Share action
+
+EVENTS TO TRACK ON CATEGORY/SEARCH PAGES:
+  - Listing card click (position, listing_id, city, category)
+  - Filter applied (which filter, which value)
+  - Filter removed
+  - Sort order changed
+  - Pagination: page number accessed
+  - Zero result state triggered (log query + city)
+
+EVENTS TO TRACK ON HOMEPAGE:
+  - Search initiated (keyword entered, city entered)
+  - Category tile clicked (which category)
+  - State clicked
+  - City clicked
+  - Featured listing clicked
+
+ACTIONABLE USES OF THIS DATA:
+  - Listings with high views but zero contact actions → improve content quality
+  - Categories with high traffic but low listing count → source more data
+  - Zero-result queries → identify content gaps, add missing categories
+  - Filters never used → remove or reposition
+  - FAQ questions never opened → remove or reorder
+  - High bounce on specific cities → investigate data quality for that city
+  - Scroll depth drop-off points → content below that point needs improvement
+
+SEARCH CONSOLE MONITORING:
+  - Monitor impressions vs. clicks per page type
+  - Track Core Web Vitals in Search Console reports
+  - Monitor index coverage — detect pages being excluded
+  - Track queries driving traffic to identify ranking opportunities
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 13: PHASE 1 SCOPE — WHAT IS AND IS NOT BEING BUILT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IN SCOPE FOR PHASE 1:
+
+  ✅ All 11 page types (Homepage through Near Me)
+  ✅ Full India geographic hierarchy (State, District, City, Pincode)
+  ✅ Business detail pages for all listings
+  ✅ Search (keyword + city)
+  ✅ Filter and sort on category pages
+  ✅ Schema markup on all page types
+  ✅ XML sitemap index with split sitemaps
+  ✅ Responsive design (mobile-first)
+  ✅ Core Web Vitals optimization
+  ✅ Breadcrumbs on all pages
+  ✅ Error and empty state handling
+  ✅ Analytics event tracking
+  ✅ Data normalization pipeline
+  ✅ Duplicate detection
+  ✅ "Last updated" timestamps
+  ✅ Null field handling
+  ✅ India address and phone formatting
+  ✅ Payment method display (India-specific)
+  ✅ City name alias resolution (Bombay→Mumbai etc.)
+
+EXPLICITLY DEFERRED TO PHASE 2:
+
+  ❌ User accounts and authentication
+  ❌ Business owner login and dashboard
+  ❌ Business listing claim flow
+  ❌ Review and rating system (requires moderation infrastructure)
+  ❌ Multilingual support (Hindi, Tamil, Telugu, Marathi)
+  ❌ Native mobile apps (web + PWA sufficient for Phase 1)
+  ❌ E-commerce or transaction processing
+  ❌ Real-time chat or messaging
+  ❌ Advanced personalization
+  ❌ Paid listing/advertisement system
+  ❌ API for third-party access
+  ❌ Business analytics dashboard
+
+  ARCHITECTURE NOTE FOR DEFERRED FEATURES:
+  While these features are not being built in Phase 1, the architecture
+  must not make them impossible or extremely expensive to add in Phase 2.
+  Specifically:
+  - Database schema should have a users table ready but empty
+  - Listing records should have a claimed_by field (null in Phase 1)
+  - URL structure should not conflict with future /dashboard or /account paths
+  - Content model should support multiple language variants per record
+  - Do not bake in assumptions that will force a full rebuild for Phase 2
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 14: DEFINITION OF DONE — COMPLETE QUALITY CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A feature or page is NOT complete until every item below is verified.
+No exceptions. No "we'll fix it later."
+
+DATA HANDLING:
+□ Renders correctly with all fields populated
+□ Renders correctly with only required fields (name, category, address, city)
+□ Renders correctly with every optional field null independently
+□ No empty field labels, dashes, or "N/A" visible to users
+□ No section headings visible without content beneath them
+□ Phone numbers display in +91 XXXXX XXXXX format
+□ Address displays in standard Indian postal format
+□ Pincode validated as 6-digit Indian format
+□ "Last updated" date visible on all listing pages
+
+LAYOUT & RESPONSIVENESS:
+□ Renders correctly at 320px width (minimum mobile)
+□ Renders correctly at 375px (iPhone standard)
+□ Renders correctly at 768px (tablet)
+□ Renders correctly at 1200px (desktop)
+□ Renders correctly at 1440px (large desktop)
+□ Sticky bottom CTA bar functions on mobile
+□ Two-column desktop layout matches single-column mobile (same content)
+□ No horizontal scrolling at any breakpoint
+□ No content overflow or clipping
+
+SEO:
+□ Title tag matches seo_title field exactly
+□ Meta description matches seo_description field exactly
+□ Canonical tag present, pointing to correct URL
+□ H1 tag present, exactly one, correct content
+□ Heading hierarchy correct (H1 → H2 → H3)
+□ Breadcrumbs present and correct
+□ Schema markup validates in Google Rich Results Test
+□ BreadcrumbList schema correct
+□ LocalBusiness/specific schema type correct
+□ FAQPage schema present (if faqs non-empty)
+□ All schema properties use only non-null data
+□ Open Graph tags present and correct
+□ URL is lowercase, hyphen-separated, no special characters
+□ No duplicate content on this page vs. other pages
+□ Page included in correct sitemap file
+
+PERFORMANCE:
+□ LCP measured < 2.5 seconds on mobile (Lighthouse or real device)
+□ INP < 200ms
+□ CLS < 0.1 (check especially around async-loaded content)
+□ All images have explicit width and height attributes
+□ All images lazy-loaded except above-the-fold content
+□ Map embed lazy-loaded or converted to tap-to-open on mobile
+□ Total page weight < 500KB (listing pages)
+□ No render-blocking resources in critical path
+
+ACCESSIBILITY:
+□ Color contrast passes WCAG 2.1 AA (4.5:1 body text, 3:1 large text)
+□ All interactive elements keyboard-navigable
+□ Tab order follows visual reading order
+□ Focus indicators visible on all interactive elements
+□ All icons have aria-label or accompanying text
+□ Accordion items have correct ARIA expanded/collapsed states
+□ All images have appropriate alt text
+□ Form inputs have associated label elements
+□ Tested with NVDA or VoiceOver
+
+FUNCTIONALITY:
+□ All CTAs only appear when their data is non-null
+□ Click-to-call opens phone dialer with correct number
+□ Directions link opens maps with correct address
+□ Website link opens in new tab
+□ FAQ accordion opens and closes correctly
+□ All listing card clicks navigate to correct detail page
+□ Breadcrumb links navigate to correct parent pages
+□ Pagination navigates correctly and updates URL
+□ Filters correctly reduce results and update URL
+□ Zero-result state handled gracefully (not blank page)
+□ 404 page returns 404 HTTP status (not 200)
+□ Browser back button preserves scroll position
+
+ANALYTICS:
+□ Page view event firing with correct properties
+□ All contact CTA click events firing
+□ FAQ open events firing with question identifier
+□ Listing card click events firing with position
+□ Filter events firing when applied or removed
+
+================================================================================
+END OF MASTER PROMPT v2.0
+ALL-INDIA MULTI-CITY LOCAL BUSINESS DIRECTORY PLATFORM
+================================================================================

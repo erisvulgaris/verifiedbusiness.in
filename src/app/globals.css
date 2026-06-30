@@ -1,0 +1,265 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ========================================================================
+   DIRECTORY PLATFORM — LIGHT MODE v1.0 DESIGN TOKENS
+   Premium Indian local business directory. Warm whites, deep India blue,
+   warm shadows, Plus Jakarta Sans + Inter. Light mode first.
+   ======================================================================== */
+
+@theme inline {
+  /* Map shadcn aliases to directory tokens (keeps shadcn/ui components styled) */
+  --color-background: var(--color-base);
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-accent);
+  --color-primary-foreground: var(--color-text-inverse);
+  --color-secondary: var(--color-surface-2);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--color-surface-2);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-accent-foreground: var(--color-text-primary);
+  --color-destructive: oklch(0.577 0.245 27.325);
+  --color-border: var(--color-border);
+  --color-input: var(--color-border-strong);
+  --color-ring: var(--color-accent);
+
+  /* Font families (set via next/font variables in layout.tsx) */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Border radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 999px;
+
+  /* Sidebar alias (shadcn) */
+  --color-sidebar: var(--color-surface);
+  --color-sidebar-foreground: var(--color-text-primary);
+  --color-sidebar-primary: var(--color-accent);
+  --color-sidebar-primary-foreground: var(--color-text-inverse);
+  --color-sidebar-accent: var(--color-surface-2);
+  --color-sidebar-accent-foreground: var(--color-text-primary);
+  --color-sidebar-border: var(--color-border);
+  --color-sidebar-ring: var(--color-accent);
+}
+
+:root {
+  /* ---------------- SURFACE COLORS ---------------- */
+  --color-base: #FAFAF8;            /* Warm white — not cold #FFFFFF */
+  --color-surface: #FFFFFF;         /* Pure white for cards */
+  --color-surface-2: #F4F3F0;       /* Subtle warm gray — section backgrounds */
+  --color-border: #E8E6E1;          /* Warm, soft dividers */
+  --color-border-strong: #D0CEC9;   /* Stronger dividers, input borders */
+
+  /* ---------------- TEXT COLORS ---------------- */
+  --color-text-primary: #1A1917;    /* Near-black, warm undertone */
+  --color-text-secondary: #5C5955;  /* Muted body text, metadata */
+  --color-text-tertiary: #9C9894;   /* Timestamps, fine print */
+  --color-text-inverse: #FFFFFF;    /* Text on dark backgrounds */
+
+  /* ---------------- BRAND / ACCENT ---------------- */
+  --color-accent: #1B4FD8;          /* Deep India blue — trust, authority */
+  --color-accent-hover: #1640B0;    /* Darker on hover */
+  --color-accent-light: #EEF2FF;    /* Accent tint for badges, chips */
+  --color-accent-border: #C7D4F8;   /* Accent border for highlighted states */
+
+  /* ---------------- SUCCESS / VERIFIED ---------------- */
+  --color-success: #16A34A;
+  --color-success-light: #DCFCE7;
+
+  /* ---------------- WARNING ---------------- */
+  --color-warning: #D97706;
+  --color-warning-light: #FEF3C7;
+
+  /* ---------------- SHADOWS (warm, not gray) ---------------- */
+  --shadow-xs: 0 1px 2px rgba(26, 25, 23, 0.06);
+  --shadow-sm: 0 2px 6px rgba(26, 25, 23, 0.08);
+  --shadow-md: 0 4px 16px rgba(26, 25, 23, 0.10);
+  --shadow-lg: 0 8px 32px rgba(26, 25, 23, 0.12);
+
+  /* ---------------- TYPE SCALE ---------------- */
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-base: 16px;
+  --text-base--line-height: 24px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
+  --text-xl: 22px;
+  --text-xl--line-height: 30px;
+  --text-2xl: 28px;
+  --text-2xl--line-height: 36px;
+  --text-3xl: 36px;
+  --text-3xl--line-height: 44px;
+  --text-4xl: 48px;
+  --text-4xl--line-height: 56px;
+
+  /* ---------------- SPACING (4px base) ---------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* shadcn radius fallback */
+  --radius: 10px;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background-color: var(--color-base);
+    color: var(--color-text-primary);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    font-feature-settings: "cv11", "ss01";
+    font-variation-settings: "opsz" 32;
+  }
+
+  /* Premium typography tightening on large headings (≥22px) */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.3px;
+  }
+  h1 { letter-spacing: -0.5px; }
+
+  ::selection {
+    background-color: var(--color-accent-light);
+    color: var(--color-accent);
+  }
+}
+
+/* ========================================================================
+   COMPONENT UTILITY CLASSES
+   ======================================================================== */
+@layer components {
+  /* Display font helper */
+  .font-display {
+    font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Container — 1200px max-width, 24px horizontal padding on mobile */
+  .directory-container {
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 24px;
+  }
+  @media (max-width: 640px) {
+    .directory-container {
+      padding-inline: 16px;
+    }
+  }
+
+  /* Warm shadows */
+  .shadow-xs-warm { box-shadow: var(--shadow-xs); }
+  .shadow-sm-warm { box-shadow: var(--shadow-sm); }
+  .shadow-md-warm { box-shadow: var(--shadow-md); }
+  .shadow-lg-warm { box-shadow: var(--shadow-lg); }
+
+  /* Skeleton shimmer */
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-surface-2);
+  }
+  .skeleton-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.65) 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+
+  /* Pulsing dot for OPEN badge */
+  .pulse-dot {
+    position: relative;
+  }
+  .pulse-dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background-color: var(--color-success);
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.7; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+}
+
+/* ========================================================================
+   SCROLLBAR (subtle, warm)
+   ======================================================================== */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-strong);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-text-tertiary);
+  }
+}
+
+/* ========================================================================
+   REDUCED MOTION — non-negotiable accessibility
+   ======================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton-shimmer::after { display: none; }
+  .pulse-dot::before { display: none; }
+}
