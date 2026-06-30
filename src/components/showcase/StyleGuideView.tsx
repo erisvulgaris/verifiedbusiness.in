@@ -8,6 +8,7 @@ import { FAQAccordion } from "@/components/directory/FAQAccordion";
 import { SearchBar } from "@/components/directory/SearchBar";
 import { CATEGORIES, FAQS, FEATURES, DO_EXAMPLES, DONT_EXAMPLES, BUSINESSES } from "@/lib/directory-data";
 import { Check, X, Star } from "lucide-react";
+import { EmptyStateIllustration } from "@/components/directory/EmptyStateIllustration";
 
 export function StyleGuideView() {
   return (
@@ -499,6 +500,472 @@ export function StyleGuideView() {
             ]}
           />
         </div>
+      </Section>
+
+      {/* ---------- NEW COMPONENTS (Iterations 1-9) ---------- */}
+      <Section title="New components" id="new-components">
+        <p className="mb-6 max-w-2xl text-secondary">
+          Components added during the iteration sprint. Each one is wired into
+          the live app — try them in the Home, Browse, and Business detail
+          views.
+        </p>
+
+        <Subsection title="Empty-state illustrations (10 variants)">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            {([
+              ["no-results", "No results"],
+              ["no-favorites", "No favorites"],
+              ["no-compare", "No compare"],
+              ["no-recently-viewed", "No recent"],
+              ["no-businesses", "No businesses"],
+              ["error", "Error"],
+              ["success", "Success"],
+              ["empty-cart", "Empty cart"],
+              ["no-notifications", "No notifications"],
+              ["no-reviews", "No reviews"],
+            ] as const).map(([type, label]) => (
+              <div
+                key={type}
+                className="border border-[var(--color-border)] rounded-[10px] bg-[var(--color-surface)] p-4 text-center"
+              >
+                <EmptyStateIllustration type={type} size={80} className="mx-auto" />
+                <p
+                  className="mt-2 font-medium"
+                  style={{
+                    color: "var(--color-text-secondary)",
+                    fontFamily: "var(--font-inter), sans-serif",
+                    fontSize: "var(--text-xs)",
+                  }}
+                >
+                  {label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Subsection>
+
+        <Subsection title="Command palette (Cmd+K)">
+          <div
+            className="border border-[var(--color-border)] rounded-[16px] bg-[var(--color-surface)] p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          >
+            <div>
+              <h3
+                className="font-display font-semibold"
+                style={{
+                  fontSize: "var(--text-base)",
+                  color: "var(--color-text-primary)",
+                }}
+              >
+                Quick search & navigation
+              </h3>
+              <p
+                className="mt-1 max-w-md"
+                style={{
+                  color: "var(--color-text-secondary)",
+                  fontFamily: "var(--font-inter), sans-serif",
+                  fontSize: "var(--text-sm)",
+                  lineHeight: "20px",
+                }}
+              >
+                Press Cmd+K (or Ctrl+K) from anywhere to open the palette. Search
+                across businesses, categories, locations, and pages. Arrow keys
+                to navigate, Enter to select.
+              </p>
+            </div>
+            <kbd
+              className="inline-flex items-center justify-center font-mono font-semibold shrink-0"
+              style={{
+                minWidth: 48,
+                height: 32,
+                padding: "0 10px",
+                borderRadius: "var(--radius-sm)",
+                backgroundColor: "var(--color-surface-2)",
+                color: "var(--color-text-primary)",
+                fontSize: "var(--text-sm)",
+                border: "1px solid var(--color-border-strong)",
+                boxShadow: "var(--shadow-xs)",
+              }}
+            >
+              ⌘K
+            </kbd>
+          </div>
+        </Subsection>
+
+        <Subsection title="Toast notifications">
+          <div className="flex flex-wrap gap-3">
+            {[
+              { label: "Saved to favorites", color: "var(--color-accent)" },
+              { label: "Added to comparison", color: "var(--color-accent)" },
+              { label: "Copied to clipboard", color: "var(--color-accent)" },
+              { label: "Review submitted", color: "var(--color-success)" },
+              { label: "Comparison full", color: "var(--color-warning)" },
+            ].map((t) => (
+              <div
+                key={t.label}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] border"
+                style={{
+                  backgroundColor: "var(--color-surface)",
+                  borderColor: "var(--color-border)",
+                  boxShadow: "var(--shadow-sm)",
+                }}
+              >
+                <span
+                  className="inline-block"
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 999,
+                    backgroundColor: t.color,
+                  }}
+                />
+                <span
+                  className="font-medium"
+                  style={{
+                    color: "var(--color-text-primary)",
+                    fontFamily: "var(--font-inter), sans-serif",
+                    fontSize: "var(--text-sm)",
+                  }}
+                >
+                  {t.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Subsection>
+
+        <Subsection title="Weekly hours table (with TODAY highlight)">
+          <div className="max-w-sm">
+            <div className="border border-[var(--color-border)] rounded-[10px] bg-[var(--color-surface)] overflow-hidden">
+              {[
+                { day: "Mon", hours: "9:00 AM – 9:00 PM", today: false },
+                { day: "Tue", hours: "9:00 AM – 9:00 PM", today: true },
+                { day: "Wed", hours: "9:00 AM – 9:00 PM", today: false },
+                { day: "Thu", hours: "9:00 AM – 9:00 PM", today: false },
+                { day: "Fri", hours: "9:00 AM – 11:00 PM", today: false },
+                { day: "Sat", hours: "9:00 AM – 11:00 PM", today: false },
+                { day: "Sun", hours: "Closed", today: false, closed: true },
+              ].map((h) => (
+                <div
+                  key={h.day}
+                  className="flex items-center justify-between gap-4 px-4 py-3 border-b border-[var(--color-border)] last:border-b-0"
+                  style={{
+                    backgroundColor: h.today ? "var(--color-accent-light)" : "transparent",
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="font-medium"
+                      style={{
+                        color: h.today ? "var(--color-accent)" : "var(--color-text-primary)",
+                        fontFamily: "var(--font-inter), sans-serif",
+                        fontSize: "var(--text-sm)",
+                        fontWeight: h.today ? 600 : 500,
+                      }}
+                    >
+                      {h.day}
+                    </span>
+                    {h.today && (
+                      <span
+                        className="inline-flex px-2 py-[2px] rounded-full font-medium"
+                        style={{
+                          backgroundColor: "var(--color-accent)",
+                          color: "var(--color-text-inverse)",
+                          fontFamily: "var(--font-inter), sans-serif",
+                          fontSize: 10,
+                          fontWeight: 600,
+                        }}
+                      >
+                        TODAY
+                      </span>
+                    )}
+                  </div>
+                  <span
+                    style={{
+                      color: h.closed ? "var(--color-text-tertiary)" : "var(--color-text-secondary)",
+                      fontFamily: "var(--font-inter), sans-serif",
+                      fontSize: "var(--text-sm)",
+                      fontWeight: h.closed ? 400 : 500,
+                    }}
+                  >
+                    {h.hours}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Subsection>
+
+        <Subsection title="Rating distribution bars">
+          <div
+            className="border border-[var(--color-border)] rounded-[10px] p-4 flex items-center gap-6 max-w-md"
+            style={{ backgroundColor: "var(--color-surface-2)" }}
+          >
+            <div className="text-center">
+              <p
+                className="font-display font-bold"
+                style={{
+                  fontSize: "var(--text-4xl)",
+                  lineHeight: "44px",
+                  color: "var(--color-text-primary)",
+                  letterSpacing: "-0.5px",
+                }}
+              >
+                4.6
+              </p>
+              <p
+                className="mt-1"
+                style={{
+                  color: "var(--color-text-tertiary)",
+                  fontFamily: "var(--font-inter), sans-serif",
+                  fontSize: "var(--text-xs)",
+                }}
+              >
+                2,841 reviews
+              </p>
+            </div>
+            <div className="flex-1 space-y-1">
+              {[5, 4, 3, 2, 1].map((star) => {
+                const pct = star === 5 ? 68 : star === 4 ? 22 : star === 3 ? 7 : star === 2 ? 2 : 1;
+                return (
+                  <div key={star} className="flex items-center gap-2">
+                    <span
+                      className="w-3"
+                      style={{
+                        color: "var(--color-text-tertiary)",
+                        fontFamily: "var(--font-inter), sans-serif",
+                        fontSize: "var(--text-xs)",
+                      }}
+                    >
+                      {star}
+                    </span>
+                    <Star size={10} strokeWidth={2} className="fill-[var(--color-warning)]" style={{ color: "var(--color-warning)" }} />
+                    <div
+                      className="flex-1 h-1.5 rounded-full overflow-hidden"
+                      style={{ backgroundColor: "var(--color-border)" }}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${pct}%`, backgroundColor: "var(--color-warning)" }}
+                      />
+                    </div>
+                    <span
+                      className="w-8 text-right"
+                      style={{
+                        color: "var(--color-text-tertiary)",
+                        fontFamily: "var(--font-inter), sans-serif",
+                        fontSize: "var(--text-xs)",
+                      }}
+                    >
+                      {pct}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Subsection>
+
+        <Subsection title="List/Map view toggle">
+          <div
+            className="inline-flex p-0.5 rounded-[8px]"
+            style={{
+              backgroundColor: "var(--color-surface-2)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px]"
+              style={{
+                backgroundColor: "var(--color-surface)",
+                color: "var(--color-text-primary)",
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: "var(--text-sm)",
+                fontWeight: 600,
+                boxShadow: "var(--shadow-xs)",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                <circle cx="3.5" cy="6" r="1.5" fill="currentColor" />
+                <circle cx="3.5" cy="12" r="1.5" fill="currentColor" />
+                <circle cx="3.5" cy="18" r="1.5" fill="currentColor" />
+              </svg>
+              List
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px]"
+              style={{
+                backgroundColor: "transparent",
+                color: "var(--color-text-secondary)",
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: "var(--text-sm)",
+                fontWeight: 500,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <line x1="9" y1="4" x2="9" y2="18" stroke="currentColor" strokeWidth="2" />
+                <line x1="15" y1="6" x2="15" y2="20" stroke="currentColor" strokeWidth="2" />
+              </svg>
+              Map
+            </button>
+          </div>
+        </Subsection>
+
+        <Subsection title="Advanced filters (price + tags)">
+          <div className="space-y-4 max-w-md">
+            <div>
+              <p
+                className="mb-2.5 font-medium"
+                style={{
+                  color: "var(--color-text-primary)",
+                  fontFamily: "var(--font-inter), sans-serif",
+                  fontSize: "var(--text-sm)",
+                  fontWeight: 500,
+                }}
+              >
+                Price range
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {["$", "$$", "$$$", "$$$$"].map((p, i) => (
+                  <span
+                    key={p}
+                    className="px-3 py-1.5 rounded-full"
+                    style={{
+                      backgroundColor: i === 2 ? "var(--color-accent-light)" : "var(--color-surface-2)",
+                      color: i === 2 ? "var(--color-accent)" : "var(--color-text-secondary)",
+                      border: i === 2 ? "1px solid var(--color-accent-border)" : "1px solid var(--color-border)",
+                      fontFamily: "var(--font-jakarta), sans-serif",
+                      fontSize: "var(--text-sm)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p
+                className="mb-2.5 font-medium"
+                style={{
+                  color: "var(--color-text-primary)",
+                  fontFamily: "var(--font-inter), sans-serif",
+                  fontSize: "var(--text-sm)",
+                  fontWeight: 500,
+                }}
+              >
+                Tags
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {["Vegetarian", "Family dining", "Filter coffee", "Biryani", "Heritage brand"].map((t, i) => (
+                  <span
+                    key={t}
+                    className="px-2.5 py-1 rounded-full"
+                    style={{
+                      backgroundColor: i === 0 || i === 3 ? "var(--color-accent-light)" : "var(--color-surface-2)",
+                      color: i === 0 || i === 3 ? "var(--color-accent)" : "var(--color-text-secondary)",
+                      border: i === 0 || i === 3 ? "1px solid var(--color-accent-border)" : "1px solid var(--color-border)",
+                      fontFamily: "var(--font-inter), sans-serif",
+                      fontSize: "var(--text-xs)",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Subsection>
+
+        <Subsection title="Active filter chips">
+          <div className="flex flex-wrap gap-2">
+            {["Verified only", "4.0+ rating", "UPI", "Price $$$", "Biryani"].map((c) => (
+              <span
+                key={c}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                style={{
+                  backgroundColor: "var(--color-accent-light)",
+                  color: "var(--color-accent)",
+                  fontFamily: "var(--font-inter), sans-serif",
+                  fontSize: "var(--text-xs)",
+                  fontWeight: 500,
+                }}
+              >
+                {c}
+                <X size={12} strokeWidth={2.5} />
+              </span>
+            ))}
+          </div>
+        </Subsection>
+
+        <Subsection title="Mobile bottom tab bar (preview)">
+          <div
+            className="border border-[var(--color-border)] rounded-[10px] max-w-sm"
+            style={{
+              backgroundColor: "var(--color-surface)",
+              boxShadow: "0 -4px 16px rgba(26, 25, 23, 0.08)",
+            }}
+          >
+            <div className="flex items-stretch justify-around px-2">
+              {[
+                { label: "Home", active: true },
+                { label: "Browse", active: false },
+                { label: "Categories", active: false },
+                { label: "Locations", active: false },
+                { label: "Saved", active: false, badge: 2 },
+              ].map((t) => (
+                <div
+                  key={t.label}
+                  className="flex-1 flex flex-col items-center gap-1 py-2"
+                  style={{ minHeight: 56 }}
+                >
+                  <div
+                    className="inline-flex items-center justify-center"
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      backgroundColor: t.active ? "var(--color-accent-light)" : "transparent",
+                    }}
+                  >
+                    {t.badge && (
+                      <span
+                        className="absolute -mt-3 -mr-3 inline-flex items-center justify-center font-display font-bold"
+                        style={{
+                          minWidth: 16,
+                          height: 16,
+                          padding: "0 4px",
+                          borderRadius: 999,
+                          backgroundColor: "var(--color-accent)",
+                          color: "var(--color-text-inverse)",
+                          fontSize: 10,
+                        }}
+                      >
+                        {t.badge}
+                      </span>
+                    )}
+                  </div>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-inter), sans-serif",
+                      fontSize: 10,
+                      fontWeight: t.active ? 600 : 500,
+                      color: t.active ? "var(--color-accent)" : "var(--color-text-secondary)",
+                    }}
+                  >
+                    {t.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Subsection>
       </Section>
     </div>
   );

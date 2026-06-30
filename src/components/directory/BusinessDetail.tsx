@@ -15,6 +15,7 @@ import {
 import { useState } from "react";
 import type { Business } from "@/lib/directory-data";
 import { CategoryChip, OpenBadge, RatingBadge, VerifiedBadge } from "./Badges";
+import { useDirectoryToast } from "@/components/showcase/useDirectoryToast";
 
 /**
  * BusinessDetailHeader — detail page hero.
@@ -127,11 +128,13 @@ export function ContactActions({
   className?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const toast = useDirectoryToast();
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(business.phone);
       setCopied(true);
+      toast.copied(business.phone);
       setTimeout(() => setCopied(false), 1500); // spec: 1.5s tooltip
     } catch {
       /* ignore */

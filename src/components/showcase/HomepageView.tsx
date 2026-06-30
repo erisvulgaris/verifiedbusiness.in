@@ -13,15 +13,30 @@ import {
   HERO_STATS,
   BUSINESSES,
 } from "@/lib/directory-data";
-import { Sparkles, ArrowRight, TrendingUp } from "lucide-react";
+import { Sparkles, ArrowRight, TrendingUp, MapPin } from "lucide-react";
+import { useRecentlyViewed } from "./RecentlyViewedContext";
+import { useDocumentTitle } from "./SeoStructuredData";
 
 export function HomepageView({
   onNavigate,
   onOpenBusiness,
+  onSearch,
+  onViewAllCategories,
+  onViewLocations,
 }: {
   onNavigate?: (view: "category" | "detail") => void;
   onOpenBusiness?: (id: string) => void;
+  onSearch?: (q: { query: string; location: string }) => void;
+  onViewAllCategories?: () => void;
+  onViewLocations?: () => void;
 }) {
+  const { recentlyViewed } = useRecentlyViewed();
+  useDocumentTitle("Bharat Directory — Premium Local Business Directory for India");
+  const recentlyViewedBusinesses = recentlyViewed
+    .map((id) => BUSINESSES.find((b) => b.id === id))
+    .filter((b): b is NonNullable<typeof b> => Boolean(b))
+    .slice(0, 3);
+
   return (
     <div className="directory-container py-8 sm:py-12">
       <Breadcrumbs
@@ -78,7 +93,39 @@ export function HomepageView({
 
         {/* Search bar */}
         <div className="mt-6 sm:mt-8">
-          <SearchBar onSearch={() => onNavigate?.("category")} />
+          <SearchBar onSearch={onSearch ?? (() => onNavigate?.("category"))} />
+        </div>
+
+        {/* Quick location shortcut */}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span
+            style={{
+              color: "var(--color-text-tertiary)",
+              fontFamily: "var(--font-inter), sans-serif",
+              fontSize: "var(--text-xs)",
+            }}
+          >
+            Popular:
+          </span>
+          {["Bengaluru", "Mumbai", "Delhi", "Pune", "Hyderabad", "Chennai"].map((city) => (
+            <button
+              key={city}
+              type="button"
+              onClick={() => onSearch?.({ query: "", location: city })}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full transition-all duration-150 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+              style={{
+                color: "var(--color-text-secondary)",
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: "var(--text-xs)",
+                fontWeight: 500,
+                backgroundColor: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <MapPin size={10} strokeWidth={2.5} />
+              {city}
+            </button>
+          ))}
         </div>
 
         {/* Hero stats */}
@@ -144,7 +191,7 @@ export function HomepageView({
           </div>
           <button
             type="button"
-            onClick={() => onNavigate?.("category")}
+            onClick={() => onViewAllCategories?.()}
             className="hidden sm:inline-flex items-center gap-1 font-medium transition-colors hover:text-[var(--color-accent-hover)]"
             style={{
               color: "var(--color-accent)",
@@ -164,6 +211,138 @@ export function HomepageView({
               category={cat}
               onClick={() => onNavigate?.("category")}
             />
+          ))}
+        </div>
+      </section>
+
+      {/* ---------- RECENTLY VIEWED (only if present) ---------- */}
+      {recentlyViewedBusinesses.length > 0 && (
+        <section className="mt-16 sm:mt-20">
+          <div className="flex items-end justify-between gap-4 mb-6">
+            <div>
+              <h2
+                className="font-display font-bold"
+                style={{
+                  fontSize: "var(--text-3xl)",
+                  lineHeight: "44px",
+                  letterSpacing: "-0.3px",
+                  color: "var(--color-text-primary)",
+                }}
+              >
+                Recently viewed
+              </h2>
+              <p
+                className="mt-1"
+                style={{
+                  color: "var(--color-text-secondary)",
+                  fontFamily: "var(--font-inter), sans-serif",
+                  fontSize: "var(--text-base)",
+                  lineHeight: "24px",
+                }}
+              >
+                Pick up where you left off.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            {recentlyViewedBusinesses.map((b) => (
+              <ListingCard
+                key={b.id}
+                business={b}
+                onOpen={() => onOpenBusiness?.(b.id)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ---------- BROWSE BY LOCATION ---------- */}
+      <section className="mt-16 sm:mt-20">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <div>
+            <h2
+              className="font-display font-bold"
+              style={{
+                fontSize: "var(--text-3xl)",
+                lineHeight: "44px",
+                letterSpacing: "-0.3px",
+                color: "var(--color-text-primary)",
+              }}
+            >
+              Browse by location
+            </h2>
+            <p
+              className="mt-1"
+              style={{
+                color: "var(--color-text-secondary)",
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: "var(--text-base)",
+                lineHeight: "24px",
+              }}
+            >
+              28 states, 8 UTs, 780+ districts, 4,000+ cities, 19,000+ pincodes.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onViewLocations?.()}
+            className="hidden sm:inline-flex items-center gap-1 font-medium transition-colors hover:text-[var(--color-accent-hover)]"
+            style={{
+              color: "var(--color-accent)",
+              fontFamily: "var(--font-inter), sans-serif",
+              fontSize: "var(--text-sm)",
+            }}
+          >
+            All states
+            <ArrowRight size={14} strokeWidth={2.5} />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[
+            { name: "Bengaluru", state: "Karnataka" },
+            { name: "Mumbai", state: "Maharashtra" },
+            { name: "New Delhi", state: "Delhi" },
+            { name: "Chennai", state: "Tamil Nadu" },
+            { name: "Hyderabad", state: "Telangana" },
+            { name: "Kolkata", state: "West Bengal" },
+          ].map((city) => (
+            <button
+              key={city.name}
+              type="button"
+              onClick={() => onSearch?.({ query: "", location: city.name })}
+              className="group flex flex-col items-start gap-2 border border-[var(--color-border)] rounded-[10px] bg-[var(--color-surface)] p-4 transition-all duration-200 hover:border-[var(--color-accent-border)] hover:shadow-[var(--shadow-sm)]"
+            >
+              <div
+                className="flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.08]"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "var(--radius-sm)",
+                  backgroundColor: "var(--color-accent-light)",
+                }}
+              >
+                <MapPin size={18} strokeWidth={2} style={{ color: "var(--color-accent)" }} />
+              </div>
+              <p
+                className="font-medium"
+                style={{
+                  color: "var(--color-text-primary)",
+                  fontFamily: "var(--font-inter), sans-serif",
+                  fontSize: "var(--text-sm)",
+                }}
+              >
+                {city.name}
+              </p>
+              <p
+                style={{
+                  color: "var(--color-text-tertiary)",
+                  fontFamily: "var(--font-inter), sans-serif",
+                  fontSize: "var(--text-xs)",
+                }}
+              >
+                {city.state}
+              </p>
+            </button>
           ))}
         </div>
       </section>

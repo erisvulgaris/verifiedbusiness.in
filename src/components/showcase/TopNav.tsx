@@ -1,19 +1,43 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { MapPin, ChevronDown, Plus } from "lucide-react";
+import {
+  MapPin,
+  ChevronDown,
+  Plus,
+  Heart,
+  GitCompare,
+  Search,
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { useFavorites } from "./FavoritesContext";
+import { useCompare } from "./CompareContext";
+import { CommandPaletteTrigger } from "./CommandPalette";
 
-export type ViewKey = "home" | "category" | "detail" | "style-guide";
+export type ViewKey =
+  | "home"
+  | "category"
+  | "detail"
+  | "style-guide"
+  | "search"
+  | "all-categories"
+  | "locations"
+  | "compare"
+  | "favorites"
+  | "list-business"
+  | "write-review";
 
 interface NavItem {
-  key: ViewKey;
+  key: ViewKey | "business";
   label: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { key: "home", label: "Home" },
   { key: "category", label: "Browse" },
-  { key: "detail", label: "Business" },
+  { key: "all-categories", label: "Categories" },
+  { key: "locations", label: "Locations" },
+  { key: "business", label: "Business" },
   { key: "style-guide", label: "Style Guide" },
 ];
 
@@ -24,10 +48,15 @@ const NAV_ITEMS: NavItem[] = [
 export function TopNav({
   activeView,
   onViewChange,
+  onOpenPalette,
 }: {
-  activeView: ViewKey;
+  activeView: ViewKey | "business";
   onViewChange: (v: ViewKey) => void;
+  onOpenPalette?: () => void;
 }) {
+  const { favorites } = useFavorites();
+  const { compareList } = useCompare();
+
   return (
     <header
       className="sticky top-0 z-50 border-b border-[var(--color-border)]"
@@ -79,7 +108,7 @@ export function TopNav({
 
           {/* Center nav (desktop) */}
           <nav
-            className="hidden md:flex items-center gap-1"
+            className="hidden lg:flex items-center gap-1"
             aria-label="Sections"
           >
             {NAV_ITEMS.map((item) => {
@@ -88,7 +117,7 @@ export function TopNav({
                 <button
                   key={item.key}
                   type="button"
-                  onClick={() => onViewChange(item.key)}
+                  onClick={() => onViewChange(item.key as ViewKey)}
                   className={cn(
                     "px-3.5 py-2 rounded-[8px] transition-all duration-150",
                     isActive ? "bg-[var(--color-accent-light)]" : "hover:bg-[var(--color-surface-2)]",
@@ -108,8 +137,81 @@ export function TopNav({
             })}
           </nav>
 
-          {/* Right side: city selector + list business */}
+          {/* Right side: command palette + favorites + compare + city + list business */}
           <div className="flex items-center gap-2">
+            {/* Command palette trigger */}
+            {onOpenPalette && <CommandPaletteTrigger onClick={onOpenPalette} />}
+
+            {/* Favorites */}
+            <button
+              type="button"
+              onClick={() => onViewChange("favorites")}
+              className="relative inline-flex items-center justify-center transition-all duration-150 hover:bg-[var(--color-surface-2)]"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: "var(--radius-md)",
+                color: activeView === "favorites" ? "var(--color-accent)" : "var(--color-text-secondary)",
+              }}
+              aria-label={`Favorites (${favorites.length})`}
+              title="Favorites"
+            >
+              <Heart size={18} strokeWidth={2} />
+              {favorites.length > 0 && (
+                <span
+                  className="absolute inline-flex items-center justify-center font-semibold"
+                  style={{
+                    top: 4,
+                    right: 4,
+                    minWidth: 16,
+                    height: 16,
+                    padding: "0 4px",
+                    borderRadius: 999,
+                    backgroundColor: "var(--color-accent)",
+                    color: "var(--color-text-inverse)",
+                    fontSize: 10,
+                  }}
+                >
+                  {favorites.length}
+                </span>
+              )}
+            </button>
+
+            {/* Compare */}
+            <button
+              type="button"
+              onClick={() => onViewChange("compare")}
+              className="relative inline-flex items-center justify-center transition-all duration-150 hover:bg-[var(--color-surface-2)]"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: "var(--radius-md)",
+                color: activeView === "compare" ? "var(--color-accent)" : "var(--color-text-secondary)",
+              }}
+              aria-label={`Compare (${compareList.length})`}
+              title="Compare businesses"
+            >
+              <GitCompare size={18} strokeWidth={2} />
+              {compareList.length > 0 && (
+                <span
+                  className="absolute inline-flex items-center justify-center font-semibold"
+                  style={{
+                    top: 4,
+                    right: 4,
+                    minWidth: 16,
+                    height: 16,
+                    padding: "0 4px",
+                    borderRadius: 999,
+                    backgroundColor: "var(--color-accent)",
+                    color: "var(--color-text-inverse)",
+                    fontSize: 10,
+                  }}
+                >
+                  {compareList.length}
+                </span>
+              )}
+            </button>
+
             <button
               type="button"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-[8px] border border-[var(--color-border-strong)] bg-[var(--color-surface)] transition-all duration-150 hover:border-[var(--color-accent)]"
@@ -126,7 +228,7 @@ export function TopNav({
             </button>
             <button
               type="button"
-              onClick={() => onViewChange("home")}
+              onClick={() => onViewChange("list-business")}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] transition-all duration-150 hover:shadow-[var(--shadow-md)]"
               style={{
                 backgroundColor: "var(--color-accent)",
@@ -146,7 +248,7 @@ export function TopNav({
 
         {/* Mobile nav (below main bar) */}
         <nav
-          className="md:hidden flex items-center gap-1 pb-2 -mx-1 overflow-x-auto"
+          className="lg:hidden flex items-center gap-1 pb-2 -mx-1 overflow-x-auto"
           aria-label="Sections"
         >
           {NAV_ITEMS.map((item) => {
@@ -155,7 +257,7 @@ export function TopNav({
               <button
                 key={item.key}
                 type="button"
-                onClick={() => onViewChange(item.key)}
+                onClick={() => onViewChange(item.key as ViewKey)}
                 className={cn(
                   "px-3 py-1.5 rounded-[8px] whitespace-nowrap transition-all duration-150",
                   isActive ? "bg-[var(--color-accent-light)]" : "hover:bg-[var(--color-surface-2)]",
@@ -180,9 +282,19 @@ export function TopNav({
 }
 
 /**
- * Footer — minimal, premium.
+ * Footer — minimal, premium. Now with quick navigation.
  */
-export function Footer() {
+export function Footer({
+  onNavigate,
+  onViewLocations,
+  onViewAllCategories,
+  onViewListBusiness,
+}: {
+  onNavigate?: (v: ViewKey) => void;
+  onViewLocations?: () => void;
+  onViewAllCategories?: () => void;
+  onViewListBusiness?: () => void;
+}) {
   return (
     <footer
       className="mt-16 sm:mt-24 border-t border-[var(--color-border)]"
@@ -237,21 +349,37 @@ export function Footer() {
 
           <FooterColumn
             title="Browse"
-            links={["Restaurants", "Doctors", "Home Services", "Schools", "Pharmacies"]}
+            links={[
+              { label: "All categories", onClick: onViewAllCategories },
+              { label: "Restaurants", onClick: () => onNavigate?.("category") },
+              { label: "Doctors", onClick: () => onNavigate?.("category") },
+              { label: "Home Services", onClick: () => onNavigate?.("category") },
+              { label: "Pharmacies", onClick: () => onNavigate?.("category") },
+            ]}
           />
           <FooterColumn
-            title="Cities"
-            links={["Bengaluru", "Mumbai", "Delhi", "Pune", "Hyderabad"]}
+            title="Locations"
+            links={[
+              { label: "All states", onClick: onViewLocations },
+              { label: "Bengaluru", onClick: () => onNavigate?.("category") },
+              { label: "Mumbai", onClick: () => onNavigate?.("category") },
+              { label: "Delhi", onClick: () => onNavigate?.("category") },
+              { label: "Pune", onClick: () => onNavigate?.("category") },
+            ]}
           />
           <FooterColumn
             title="For business"
-            links={["List your business", "Pricing", "Verify your listing", "Support", "API docs"]}
+            links={[
+              { label: "List your business", onClick: onViewListBusiness },
+              { label: "Verify your listing", onClick: onViewListBusiness },
+              { label: "Favorites", onClick: () => onNavigate?.("favorites") },
+              { label: "Compare", onClick: () => onNavigate?.("compare") },
+              { label: "Style guide", onClick: () => onNavigate?.("style-guide") },
+            ]}
           />
         </div>
 
-        <div
-          className="mt-10 pt-6 border-t border-[var(--color-border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
-        >
+        <div className="mt-10 pt-6 border-t border-[var(--color-border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <p
             style={{
               color: "var(--color-text-tertiary)",
@@ -283,7 +411,13 @@ export function Footer() {
   );
 }
 
-function FooterColumn({ title, links }: { title: string; links: string[] }) {
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string;
+  links: { label: string; onClick?: () => void }[];
+}) {
   return (
     <div>
       <h4
@@ -297,18 +431,19 @@ function FooterColumn({ title, links }: { title: string; links: string[] }) {
       </h4>
       <ul className="space-y-2">
         {links.map((l) => (
-          <li key={l}>
-            <a
-              href="#"
-              className="transition-colors hover:text-[var(--color-accent)]"
+          <li key={l.label}>
+            <button
+              type="button"
+              onClick={l.onClick}
+              className="text-left transition-colors hover:text-[var(--color-accent)]"
               style={{
                 color: "var(--color-text-secondary)",
                 fontFamily: "var(--font-inter), sans-serif",
                 fontSize: "var(--text-sm)",
               }}
             >
-              {l}
-            </a>
+              {l.label}
+            </button>
           </li>
         ))}
       </ul>

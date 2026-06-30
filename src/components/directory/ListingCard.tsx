@@ -8,6 +8,8 @@ import {
   Phone,
   ArrowRight,
   Star,
+  Heart,
+  GitCompare,
 } from "lucide-react";
 import type { Business } from "@/lib/directory-data";
 import {
@@ -17,6 +19,10 @@ import {
   UnverifiedBadge,
   VerifiedBadge,
 } from "./Badges";
+import { useFavorites } from "@/components/showcase/FavoritesContext";
+import { useCompare } from "@/components/showcase/CompareContext";
+import { useDirectoryToast } from "@/components/showcase/useDirectoryToast";
+import { EmptyStateIllustration } from "./EmptyStateIllustration";
 
 /**
  * ListingCard — the workhorse of any directory page.
@@ -36,6 +42,33 @@ export function ListingCard({
   onOpen?: (b: Business) => void;
   className?: string;
 }) {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isInCompare, toggleCompare, compareList, maxItems } = useCompare();
+  const toast = useDirectoryToast();
+  const isFav = isFavorite(business.id);
+  const isCompared = isInCompare(business.id);
+  const compareDisabled = !isCompared && compareList.length >= maxItems;
+
+  const handleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const willAdd = !isFav;
+    toggleFavorite(business.id);
+    if (willAdd) toast.favoriteAdded(business.name);
+    else toast.favoriteRemoved(business.name);
+  };
+
+  const handleCompare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (compareDisabled) {
+      toast.compareFull(maxItems);
+      return;
+    }
+    const willAdd = !isCompared;
+    toggleCompare(business.id);
+    if (willAdd) toast.compareAdded(business.name, compareList.length + 1, maxItems);
+    else toast.compareRemoved(business.name);
+  };
+
   return (
     <article
       onClick={() => onOpen?.(business)}
@@ -58,7 +91,7 @@ export function ListingCard({
         }
       }}
     >
-      {/* Header row: name + view details link */}
+      {/* Header row: name + actions */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h3
@@ -81,26 +114,47 @@ export function ListingCard({
             )}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpen?.(business);
-          }}
-          className="inline-flex items-center gap-1 font-medium shrink-0"
-          style={{
-            color: "var(--color-accent)",
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "var(--text-sm)",
-          }}
-        >
-          View Details
-          <ArrowRight
-            size={14}
-            strokeWidth={2}
-            className="transition-transform duration-200 group-hover:translate-x-0.5"
-          />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={handleFavorite}
+            aria-label={isFav ? `Remove ${business.name} from favorites` : `Add ${business.name} to favorites`}
+            aria-pressed={isFav}
+            className="inline-flex items-center justify-center transition-all duration-150 hover:bg-[var(--color-surface-2)]"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "var(--radius-sm)",
+              color: isFav ? "var(--color-accent)" : "var(--color-text-tertiary)",
+            }}
+          >
+            <Heart
+              size={16}
+              strokeWidth={2}
+              className={isFav ? "fill-[var(--color-accent)]" : "fill-none"}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={handleCompare}
+            disabled={compareDisabled}
+            aria-label={isCompared ? `Remove ${business.name} from comparison` : `Add ${business.name} to comparison`}
+            aria-pressed={isCompared}
+            className="inline-flex items-center justify-center transition-all duration-150 hover:bg-[var(--color-surface-2)] disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "var(--radius-sm)",
+              color: isCompared ? "var(--color-accent)" : "var(--color-text-tertiary)",
+            }}
+          >
+            <GitCompare
+              size={16}
+              strokeWidth={2}
+              className={isCompared ? "fill-[var(--color-accent)]" : "fill-none"}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Rating + open-status row */}
@@ -164,7 +218,7 @@ export function ListingCard({
         </div>
       </dl>
 
-      {/* Phone CTA (bottom) */}
+      {/* Bottom row: phone + view details link */}
       <div className="mt-4 pt-4 border-t border-[var(--color-border)] flex items-center justify-between">
         <span
           className="inline-flex items-center gap-2 font-medium"
@@ -177,16 +231,26 @@ export function ListingCard({
           <Phone size={14} strokeWidth={2} style={{ color: "var(--color-accent)" }} />
           {business.phone}
         </span>
-        <span
-          className="font-medium"
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen?.(business);
+          }}
+          className="inline-flex items-center gap-1 font-medium shrink-0"
           style={{
-            color: "var(--color-text-tertiary)",
+            color: "var(--color-accent)",
             fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "var(--text-xs)",
+            fontSize: "var(--text-sm)",
           }}
         >
-          {business.yearsActive}+ yrs
-        </span>
+          Details
+          <ArrowRight
+            size={14}
+            strokeWidth={2}
+            className="transition-transform duration-200 group-hover:translate-x-0.5"
+          />
+        </button>
       </div>
     </article>
   );
@@ -228,8 +292,9 @@ export function ListingCardSkeleton() {
 export function ListingCardEmpty({ query }: { query?: string }) {
   return (
     <div className="border border-dashed border-[var(--color-border-strong)] rounded-[10px] bg-[var(--color-surface)] p-10 text-center">
+      <EmptyStateIllustration type="no-results" size={120} className="mx-auto" />
       <p
-        className="font-display font-semibold"
+        className="mt-4 font-display font-semibold"
         style={{
           color: "var(--color-text-primary)",
           fontSize: "var(--text-lg)",
