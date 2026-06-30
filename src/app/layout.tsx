@@ -18,7 +18,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Bharat Directory — Premium Local Business Directory for India",
+  title: "VerifiedBusiness.in — Premium Local Business Directory for India",
   description:
     "A clean, confident, distinctly Indian local business directory. Find verified businesses across every city, district, and pincode in India.",
   keywords: [
@@ -28,12 +28,12 @@ export const metadata: Metadata = {
     "verified listings",
     "Bharat directory",
   ],
-  authors: [{ name: "Bharat Directory" }],
+  authors: [{ name: "VerifiedBusiness.in" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "Bharat Directory",
+    title: "VerifiedBusiness.in",
     description: "Premium local business directory for India",
     type: "website",
   },

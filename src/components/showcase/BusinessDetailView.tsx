@@ -44,7 +44,7 @@ export function BusinessDetailView({
 
   // SEO: update document title per business
   useDocumentTitle(
-    `${business.name} — ${business.category} in ${business.locality}, ${business.city} | Bharat Directory`,
+    `${business.name} — ${business.category} in ${business.locality}, ${business.city} | VerifiedBusiness.in`,
   );
 
   // Track in recently viewed whenever the business changes

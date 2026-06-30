@@ -13,6 +13,11 @@ import { CompareView } from "@/components/showcase/CompareView";
 import { FavoritesView } from "@/components/showcase/FavoritesView";
 import { ListBusinessView } from "@/components/showcase/ListBusinessView";
 import { WriteReviewView } from "@/components/showcase/WriteReviewView";
+import { AdminDashboardView } from "@/components/admin/AdminDashboardView";
+import { AdminBusinessesView } from "@/components/admin/AdminBusinessesView";
+import { AdminReviewsView } from "@/components/admin/AdminReviewsView";
+import { AdminSubscriptionsView } from "@/components/admin/AdminSubscriptionsView";
+import { AdminSettingsView } from "@/components/admin/AdminSettingsView";
 import {
   CommandPalette,
   useCommandPaletteShortcut,
@@ -162,6 +167,37 @@ export default function Page() {
                   businessId={businessId}
                   onNavigateHome={() => setView("home")}
                   onBack={() => setView("detail")}
+                />
+              )}
+              {view === "admin-dashboard" && (
+                <AdminDashboardView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
+                />
+              )}
+              {view === "admin-businesses" && (
+                <AdminBusinessesView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
+                  onOpenBusiness={handleOpenBusiness}
+                />
+              )}
+              {view === "admin-reviews" && (
+                <AdminReviewsView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
+                />
+              )}
+              {view === "admin-subscriptions" && (
+                <AdminSubscriptionsView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
+                />
+              )}
+              {view === "admin-settings" && (
+                <AdminSettingsView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
                 />
               )}
               </ErrorBoundary>

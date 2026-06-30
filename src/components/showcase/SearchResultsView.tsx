@@ -29,8 +29,8 @@ export function SearchResultsView({
 
   useDocumentTitle(
     query || location
-      ? `Search${query ? ` "${query}"` : ""}${location ? ` near ${location}` : ""} — ${results.length} results | Bharat Directory`
-      : "Search businesses across India | Bharat Directory",
+      ? `Search${query ? ` "${query}"` : ""}${location ? ` near ${location}` : ""} — ${results.length} results | VerifiedBusiness.in`
+      : "Search businesses across India | VerifiedBusiness.in",
   );
 
   return (

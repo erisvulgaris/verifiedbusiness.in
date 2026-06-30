@@ -35,7 +35,7 @@ export function StyleGuideView() {
             color: "var(--color-text-primary)",
           }}
         >
-          Bharat Directory — Light Mode v1.0
+          VerifiedBusiness.in — Light Mode v1.0
         </h1>
         <p
           className="mt-3 max-w-2xl"

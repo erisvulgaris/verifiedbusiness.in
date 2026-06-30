@@ -13,7 +13,7 @@ interface CompareContextValue {
 
 const CompareContext = createContext<CompareContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "bharat-directory:compare";
+const STORAGE_KEY = "verifiedbusiness:compare";
 const MAX_ITEMS = 3;
 
 export function CompareProvider({ children }: { children: ReactNode }) {

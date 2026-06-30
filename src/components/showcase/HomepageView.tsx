@@ -31,7 +31,7 @@ export function HomepageView({
   onViewLocations?: () => void;
 }) {
   const { recentlyViewed } = useRecentlyViewed();
-  useDocumentTitle("Bharat Directory — Premium Local Business Directory for India");
+  useDocumentTitle("VerifiedBusiness.in — Premium Local Business Directory for India");
   const recentlyViewedBusinesses = recentlyViewed
     .map((id) => BUSINESSES.find((b) => b.id === id))
     .filter((b): b is NonNullable<typeof b> => Boolean(b))
@@ -461,7 +461,7 @@ export function HomepageView({
               }}
             >
               Everything you need to know about how listings, verification, and
-              coverage work on Bharat Directory.
+              coverage work on VerifiedBusiness.in.
             </p>
             <button
               type="button"

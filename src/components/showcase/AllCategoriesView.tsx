@@ -19,7 +19,7 @@ export function AllCategoriesView({
     c.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  useDocumentTitle("All Categories — Browse 12+ Business Types | Bharat Directory");
+  useDocumentTitle("All Categories — Browse 12+ Business Types | VerifiedBusiness.in");
 
   return (
     <div className="directory-container py-8 sm:py-12">
@@ -52,7 +52,7 @@ export function AllCategoriesView({
           }}
         >
           From restaurants and hospitals to lawyers and salons — every category
-          on Bharat Directory, with verified listings across all 28 states.
+          on VerifiedBusiness.in, with verified listings across all 28 states.
         </p>
       </header>
 

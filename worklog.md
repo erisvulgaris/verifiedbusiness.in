@@ -393,3 +393,41 @@ Stage Summary:
 - Lint: clean. All endpoints: 200. 0 runtime errors.
 - Scheduler verified working (starts, logs, calls maintenance API successfully)
 - Note: sandbox terminates background processes; in production the scheduler runs as systemd service / Docker sidecar / k8s CronJob
+
+---
+Task ID: ADMIN-1
+Agent: main
+Task: AI-agent docs + rename to VerifiedBusiness.in + subscription model + full admin panel + E2E testing
+
+Work Log:
+- DOCS: Created docs/ folder with 7 AI-agent-optimized files (README, 01-architecture, 02-design-system, 03-data-model, 04-engineering-decisions, 05-admin-panel, 06-testing-checklist, 07-conventions). Each <300 lines, table-driven, code-linked.
+- RENAME: Global replace Bharat Directory → VerifiedBusiness.in across all source files (27 occurrences), bharatdirectory.in → verifiedbusiness.in (7), bharat-directory: → verifiedbusiness: (3 localStorage keys), /tmp path, package.json name→"verifiedbusiness" v1.0.0
+- SUBSCRIPTION MODEL: Added Subscription interface (plan: free|monthly|yearly, status: active|expired|pending|cancelled, startDate, endDate, amount, autoRenew), SUBSCRIPTION_PLANS constant (free ₹0, monthly ₹999/30d, yearly ₹9999/365d with feature lists), assignSubscriptions() helper that deterministically assigns plans to all 24 businesses based on verified status + ID hash. Updated Prisma schema with 6 subscription fields + 2 indexes. Updated health check to validate subscription shape.
+- ADMIN DATA: Created src/lib/admin-data.ts with getAdminStats(), getRevenueMetrics(), getRevenueTrend(), getFlaggedReviews(), getTopCategories(), getRecentActivity(), formatINR(), formatNumber()
+- ADMIN DASHBOARD: 6 KPI cards (total/verified/subscriptions/MRR/pending/flagged), revenue trend bar chart (6 months), subscription plan distribution (stacked bar + legend), top categories (horizontal bars), recent activity feed (6 items), 3 quick-action cards
+- ADMIN BUSINESSES: Full table with 9 columns, search + 2 filters (verification, plan), bulk select with bulk verify/delete, per-row actions (view, verify toggle, subscription modal, edit modal, delete confirm), 3 modals (Edit with 7 fields, Subscription plan picker with 3 plans + CURRENT badge, Delete confirmation)
+- ADMIN REVIEWS: Card-based moderation queue, 5 status tabs (all/flagged/pending/approved/rejected) with counts, search, flag reason banner, Approve/Reject/Ignore actions, status updates live
+- ADMIN SUBSCRIPTIONS: 4 revenue KPIs (MRR/ARR/total/churn), 3 plan breakdown cards, revenue trend chart with hover tooltips, 2 expiry alert cards (7-day + 30-day), full subscriptions table with filters
+- ADMIN SETTINGS: 5 sections (pricing inputs with savings calculator, verification criteria toggles, email notification toggles, feature flags, maintenance trigger with live API call + result display)
+- WIRING: Added 5 admin ViewKeys, Admin nav button in TopNav, Admin tab in MobileTabBar (replaced Categories), 5 admin items in CommandPalette with new "Admin" group, all 5 views rendered in page.tsx with ErrorBoundary
+- TESTING (agent-browser E2E):
+  ✓ Homepage loads with VerifiedBusiness.in branding
+  ✓ Admin nav button present + clickable
+  ✓ Admin dashboard: 6 KPIs render (24 businesses, 22 verified, 13 subs), revenue chart, plan distribution, top categories, activity feed
+  ✓ Admin businesses: 24 rows render, search works, subscription modal opens (shows CURRENT badge on Monthly ₹999), plan switch Monthly→Yearly verified in table
+  ✓ Admin reviews: 2 flagged reviews, Approve action updates counts (2 flagged→1, 0 approved→1)
+  ✓ Admin subscriptions: MRR ₹11,827, ARR ₹1,41,921, total ₹75,987, plan breakdown cards, revenue chart, expiry alerts
+  ✓ Admin settings: 5 sections render, "Run maintenance now" button works → "Maintenance completed: pass · 0 tasks · 40ms"
+  ✓ Mobile (390x844): Admin sidebar nav works, all views responsive
+  ✓ Command palette: searching "admin" shows all 5 admin items
+  ✓ 0 console errors, 0 browser errors
+
+Stage Summary:
+- 7 docs files (AI-agent-optimized, <300 lines each)
+- Brand fully renamed to VerifiedBusiness.in
+- Subscription model: 3 plans (free/monthly ₹999/yearly ₹9999), 4 statuses, auto-renew
+- 5 admin views: Dashboard, Businesses, Reviews, Subscriptions, Settings
+- 4 admin modals: Edit, Subscription, Delete, (reviews use inline actions)
+- 1 new lib: admin-data.ts (8 helper functions)
+- 1 new component folder: src/components/admin/ (6 files)
+- Lint: clean. Health: 5/5 pass. API: VerifiedBusiness.in API v1.0.0. 0 errors.

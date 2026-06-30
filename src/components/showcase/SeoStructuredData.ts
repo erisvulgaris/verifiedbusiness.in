@@ -34,9 +34,9 @@ export function useBusinessJsonLd(business: Business | undefined) {
     const localBusiness = {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
-      "@id": `https://bharatdirectory.in/business/${business.id}`,
+      "@id": `https://verifiedbusiness.in/business/${business.id}`,
       name: business.name,
-      image: `https://bharatdirectory.in/photos/${business.id}/main.jpg`,
+      image: `https://verifiedbusiness.in/photos/${business.id}/main.jpg`,
       telephone: business.phone,
       email: business.email,
       url: business.website ? `https://${business.website}` : undefined,
@@ -85,11 +85,11 @@ export function useBusinessJsonLd(business: Business | undefined) {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "India", item: "https://bharatdirectory.in" },
-        { "@type": "ListItem", position: 2, name: business.state, item: `https://bharatdirectory.in/${business.state}` },
-        { "@type": "ListItem", position: 3, name: business.city, item: `https://bharatdirectory.in/${business.state}/${business.city}` },
-        { "@type": "ListItem", position: 4, name: business.category, item: `https://bharatdirectory.in/${business.state}/${business.city}/${business.categorySlug}` },
-        { "@type": "ListItem", position: 5, name: business.name, item: `https://bharatdirectory.in/business/${business.id}` },
+        { "@type": "ListItem", position: 1, name: "India", item: "https://verifiedbusiness.in" },
+        { "@type": "ListItem", position: 2, name: business.state, item: `https://verifiedbusiness.in/${business.state}` },
+        { "@type": "ListItem", position: 3, name: business.city, item: `https://verifiedbusiness.in/${business.state}/${business.city}` },
+        { "@type": "ListItem", position: 4, name: business.category, item: `https://verifiedbusiness.in/${business.state}/${business.city}/${business.categorySlug}` },
+        { "@type": "ListItem", position: 5, name: business.name, item: `https://verifiedbusiness.in/business/${business.id}` },
       ],
     };
 

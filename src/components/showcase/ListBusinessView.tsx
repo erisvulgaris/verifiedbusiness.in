@@ -31,7 +31,7 @@ export function ListBusinessView({
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
 
-  useDocumentTitle("List your business — Free | Bharat Directory");
+  useDocumentTitle("List your business — Free | VerifiedBusiness.in");
 
   const [form, setForm] = useState({
     name: "",

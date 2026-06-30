@@ -24,8 +24,8 @@ export function LocationsView({
 
   useDocumentTitle(
     selected
-      ? `${selected.name} — ${selected.cityCount} cities, ${selected.businessCount.toLocaleString("en-IN")} businesses | Bharat Directory`
-      : "Browse by Location — 28 States, 4,000+ Cities | Bharat Directory",
+      ? `${selected.name} — ${selected.cityCount} cities, ${selected.businessCount.toLocaleString("en-IN")} businesses | VerifiedBusiness.in`
+      : "Browse by Location — 28 States, 4,000+ Cities | VerifiedBusiness.in",
   );
 
   return (

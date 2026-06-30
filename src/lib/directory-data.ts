@@ -1,5 +1,5 @@
 /**
- * Bharat Directory — Mock data for showcase
+ * VerifiedBusiness.in — Mock data for showcase
  * Realistic Indian business listings across cities, categories, and localities.
  * Used to populate the homepage, category listing, business detail, comparison,
  * search, and location views.
@@ -50,6 +50,63 @@ export interface DayHours {
   closed?: boolean;
 }
 
+/* ---------------- SUBSCRIPTION (paid listing model) ---------------- */
+export type SubscriptionPlan = "free" | "monthly" | "yearly";
+export type SubscriptionStatus = "active" | "expired" | "pending" | "cancelled";
+
+export interface Subscription {
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  startDate: string;        // ISO date
+  endDate: string;          // ISO date (expiry)
+  amount: number;           // in INR (₹)
+  autoRenew: boolean;
+}
+
+/* ---------------- SUBSCRIPTION PLANS (pricing) ---------------- */
+export const SUBSCRIPTION_PLANS = {
+  free: {
+    id: "free" as const,
+    label: "Free",
+    price: 0,
+    durationDays: 0,
+    features: [
+      "Basic listing",
+      "No verification badge",
+      "Standard placement",
+      "Limited to 3 photos",
+    ],
+  },
+  monthly: {
+    id: "monthly" as const,
+    label: "Monthly",
+    price: 999,
+    durationDays: 30,
+    features: [
+      "Verified badge",
+      "Priority placement in search",
+      "Analytics dashboard",
+      "Unlimited photos",
+      "Respond to reviews",
+    ],
+  },
+  yearly: {
+    id: "yearly" as const,
+    label: "Yearly",
+    price: 9999,
+    durationDays: 365,
+    features: [
+      "Everything in Monthly",
+      "2 months free (₹11,988 → ₹9,999)",
+      "Premium support",
+      "Featured badge on listing",
+      "API access for data sync",
+    ],
+  },
+} as const;
+
+export type SubscriptionPlanKey = keyof typeof SUBSCRIPTION_PLANS;
+
 export interface Review {
   id: string;
   author: string;
@@ -87,6 +144,7 @@ export interface Business {
   photos?: number;
   reviews?: Review[];
   tags?: string[];
+  subscription: Subscription;
 }
 
 export interface FAQItem {
@@ -1449,17 +1507,60 @@ export const BUSINESSES: Business[] = [
   },
 ];
 
+/* ---------------- Assign subscriptions to each business ---------------- */
+// Verified businesses get paid plans (monthly or yearly).
+// Unverified businesses get free plan.
+// Deterministic based on business ID hash so data is stable across renders.
+function assignSubscriptions() {
+  for (const b of BUSINESSES) {
+    if (!b.verified) {
+      b.subscription = {
+        plan: "free",
+        status: "active",
+        startDate: "2026-01-01",
+        endDate: "",
+        amount: 0,
+        autoRenew: false,
+      };
+      continue;
+    }
+    // Verified → paid. Alternate monthly/yearly deterministically.
+    const idHash = b.id.charCodeAt(b.id.length - 1) ?? 0;
+    const plan = idHash % 3 === 0 ? "yearly" : "monthly";
+    const price = plan === "yearly" ? 9999 : 999;
+    const days = plan === "yearly" ? 365 : 30;
+
+    // Some subscriptions are expired (status variety for admin testing)
+    const statusRoll = idHash % 7;
+    const status: SubscriptionStatus =
+      statusRoll === 0 ? "expired" : statusRoll === 1 ? "pending" : "active";
+
+    const startDate = new Date("2026-01-15");
+    const endDate = new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000);
+
+    b.subscription = {
+      plan,
+      status,
+      startDate: startDate.toISOString().slice(0, 10),
+      endDate: endDate.toISOString().slice(0, 10),
+      amount: price,
+      autoRenew: status === "active" ? idHash % 2 === 0 : false,
+    };
+  }
+}
+assignSubscriptions();
+
 /* ---------------- FAQ ---------------- */
 export const FAQS: FAQItem[] = [
   {
     id: "f1",
-    question: "How are businesses verified on Bharat Directory?",
+    question: "How are businesses verified on VerifiedBusiness.in?",
     answer:
       "Every listed business goes through a three-step verification process: GST or shop establishment proof, a phone call to confirm operating hours, and a physical address cross-check using Google Maps plus India Post pincode data. Verified listings carry a green Verified badge in the listing card and on the detail page. Unverified listings still appear but show an amber Unverified badge so users can make an informed choice.",
   },
   {
     id: "f2",
-    question: "Is Bharat Directory free to use?",
+    question: "Is VerifiedBusiness.in free to use?",
     answer:
       "Yes, searching and viewing business details is completely free for end users. You can search across all 28 states, 780+ districts, and 19,000+ pincodes without an account. Businesses can claim a basic listing for free; paid plans only unlock premium placement, analytics, and multi-branch management.",
   },

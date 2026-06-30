@@ -10,7 +10,7 @@ interface RecentlyViewedContextValue {
 
 const RecentlyViewedContext = createContext<RecentlyViewedContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "bharat-directory:recently-viewed";
+const STORAGE_KEY = "verifiedbusiness:recently-viewed";
 const MAX_ITEMS = 6;
 
 export function RecentlyViewedProvider({ children }: { children: ReactNode }) {

@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
  */
 export async function GET() {
   return NextResponse.json({
-    name: "Bharat Directory API",
+    name: "VerifiedBusiness.in API",
     version: "1.0.0",
     description: "Premium local business directory for India",
     endpoints: {

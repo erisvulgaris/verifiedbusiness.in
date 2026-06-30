@@ -17,6 +17,9 @@ import {
   Plus,
   Star,
   X,
+  LayoutDashboard,
+  CreditCard,
+  Settings,
 } from "lucide-react";
 import { BUSINESSES, CATEGORIES, INDIA_STATES } from "@/lib/directory-data";
 import type { ViewKey } from "./TopNav";
@@ -26,7 +29,7 @@ interface CommandItem {
   label: string;
   hint?: string;
   icon: React.ComponentType<{ size?: number; strokeWidth?: number; style?: React.CSSProperties }>;
-  group: "Navigate" | "Businesses" | "Categories" | "Locations" | "Actions";
+  group: "Navigate" | "Admin" | "Businesses" | "Categories" | "Locations" | "Actions";
   action: () => void;
 }
 
@@ -132,6 +135,47 @@ export function CommandPalette({
       group: "Navigate",
       action: () => onNavigate("style-guide"),
     },
+    // Admin
+    {
+      id: "nav-admin-dashboard",
+      label: "Admin dashboard",
+      hint: "Platform overview",
+      icon: LayoutDashboard,
+      group: "Admin",
+      action: () => onNavigate("admin-dashboard"),
+    },
+    {
+      id: "nav-admin-businesses",
+      label: "Manage businesses",
+      hint: "Approve, edit, delete",
+      icon: Building2,
+      group: "Admin",
+      action: () => onNavigate("admin-businesses"),
+    },
+    {
+      id: "nav-admin-reviews",
+      label: "Moderate reviews",
+      hint: "Flagged & pending",
+      icon: Star,
+      group: "Admin",
+      action: () => onNavigate("admin-reviews"),
+    },
+    {
+      id: "nav-admin-subscriptions",
+      label: "Subscriptions & revenue",
+      hint: "MRR, ARR, churn",
+      icon: CreditCard,
+      group: "Admin",
+      action: () => onNavigate("admin-subscriptions"),
+    },
+    {
+      id: "nav-admin-settings",
+      label: "Admin settings",
+      hint: "Pricing, features",
+      icon: Settings,
+      group: "Admin",
+      action: () => onNavigate("admin-settings"),
+    },
     // Actions
     {
       id: "action-list",
@@ -189,7 +233,7 @@ export function CommandPalette({
     return acc;
   }, {});
 
-  const groupOrder: CommandItem["group"][] = ["Navigate", "Actions", "Businesses", "Categories", "Locations"];
+  const groupOrder: CommandItem["group"][] = ["Navigate", "Admin", "Actions", "Businesses", "Categories", "Locations"];
   const flatFiltered = groupOrder.flatMap((g) => grouped[g] ?? []);
 
   // Keyboard navigation

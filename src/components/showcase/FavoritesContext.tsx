@@ -11,7 +11,7 @@ interface FavoritesContextValue {
 
 const FavoritesContext = createContext<FavoritesContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "bharat-directory:favorites";
+const STORAGE_KEY = "verifiedbusiness:favorites";
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   // Lazy initializer — reads from localStorage on the client, empty on SSR.

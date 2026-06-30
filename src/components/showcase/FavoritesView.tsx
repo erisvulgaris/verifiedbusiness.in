@@ -24,8 +24,8 @@ export function FavoritesView({
 
   useDocumentTitle(
     sorted.length > 0
-      ? `Your favorites (${sorted.length}) | Bharat Directory`
-      : "Your favorites | Bharat Directory",
+      ? `Your favorites (${sorted.length}) | VerifiedBusiness.in`
+      : "Your favorites | VerifiedBusiness.in",
   );
 
   return (

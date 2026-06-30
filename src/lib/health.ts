@@ -189,10 +189,20 @@ const checkMockDataIntegrity: HealthCheck = async () => {
     // Spot-check required fields on first business
     const sample = BUSINESSES[0];
     if (sample) {
-      const required = ["id", "name", "category", "rating", "address", "city", "phone", "pincode"];
+      const required = ["id", "name", "category", "rating", "address", "city", "phone", "pincode", "subscription"];
       for (const field of required) {
         if (!(field in sample) || sample[field as keyof typeof sample] == null) {
           issues.push(`Business ${sample.id ?? "?"} missing field: ${field}`);
+        }
+      }
+      // Validate subscription shape
+      if (sample.subscription) {
+        const sub = sample.subscription;
+        if (!["free", "monthly", "yearly"].includes(sub.plan)) {
+          issues.push(`Invalid subscription plan: ${sub.plan}`);
+        }
+        if (!["active", "expired", "pending", "cancelled"].includes(sub.status)) {
+          issues.push(`Invalid subscription status: ${sub.status}`);
         }
       }
     }

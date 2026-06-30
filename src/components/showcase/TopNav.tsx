@@ -25,7 +25,12 @@ export type ViewKey =
   | "compare"
   | "favorites"
   | "list-business"
-  | "write-review";
+  | "write-review"
+  | "admin-dashboard"
+  | "admin-businesses"
+  | "admin-reviews"
+  | "admin-subscriptions"
+  | "admin-settings";
 
 interface NavItem {
   key: ViewKey | "business";
@@ -39,6 +44,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "locations", label: "Locations" },
   { key: "business", label: "Business" },
   { key: "style-guide", label: "Style Guide" },
+  { key: "admin-dashboard", label: "Admin" },
 ];
 
 /**
@@ -102,7 +108,7 @@ export function TopNav({
                 letterSpacing: "-0.2px",
               }}
             >
-              Bharat Directory
+              VerifiedBusiness.in
             </span>
           </button>
 
@@ -330,7 +336,7 @@ export function Footer({
                   color: "var(--color-text-primary)",
                 }}
               >
-                Bharat Directory
+                VerifiedBusiness.in
               </span>
             </div>
             <p
@@ -387,7 +393,7 @@ export function Footer({
               fontSize: "var(--text-xs)",
             }}
           >
-            © 2026 Bharat Directory · Made in India · Light Mode v1.0
+            © 2026 VerifiedBusiness.in · Made in India · Light Mode v1.0
           </p>
           <div className="flex items-center gap-4">
             {["Privacy", "Terms", "Cookies", "Sitemap"].map((l) => (

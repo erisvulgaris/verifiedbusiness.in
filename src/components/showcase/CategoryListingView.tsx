@@ -25,7 +25,7 @@ export function CategoryListingView({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
-  useDocumentTitle("Restaurants in Bengaluru — Verified Listings | Bharat Directory");
+  useDocumentTitle("Restaurants in Bengaluru — Verified Listings | VerifiedBusiness.in");
 
   const togglePayment = (method: string) => {
     setSelectedPayments((prev) =>

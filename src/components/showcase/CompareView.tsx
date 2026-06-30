@@ -38,8 +38,8 @@ export function CompareView({
 
   useDocumentTitle(
     sorted.length > 0
-      ? `Compare ${sorted.length} businesses | Bharat Directory`
-      : "Compare businesses side-by-side | Bharat Directory",
+      ? `Compare ${sorted.length} businesses | VerifiedBusiness.in`
+      : "Compare businesses side-by-side | VerifiedBusiness.in",
   );
 
   return (

@@ -115,6 +115,15 @@ model Business {
   priceRange      String?  // "$", "$$", "$$$", "$$$$"
   photoCount      Int      @default(0)
   tags            String?  // JSON-encoded array
+
+  // Subscription (paid listing model)
+  subscriptionPlan     String   @default("free")  // "free" | "monthly" | "yearly"
+  subscriptionStatus   String   @default("active") // "active" | "expired" | "pending" | "cancelled"
+  subscriptionStart    DateTime?
+  subscriptionEnd      DateTime?
+  subscriptionAmount   Int      @default(0) // in INR (paise not needed for mock)
+  subscriptionAutoRenew Boolean @default(false)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -127,6 +136,8 @@ model Business {
   @@index([pincode])
   @@index([verified])
   @@index([rating])
+  @@index([subscriptionPlan])
+  @@index([subscriptionStatus])
 }
 
 model DayHours {

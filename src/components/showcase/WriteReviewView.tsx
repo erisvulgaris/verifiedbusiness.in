@@ -25,7 +25,7 @@ export function WriteReviewView({
 
   const canSubmit = rating > 0 && review.length >= 20 && name.length >= 2;
 
-  useDocumentTitle(`Write a review — ${business.name} | Bharat Directory`);
+  useDocumentTitle(`Write a review — ${business.name} | VerifiedBusiness.in`);
 
   if (submitted) {
     return (

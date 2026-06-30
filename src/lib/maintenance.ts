@@ -174,7 +174,7 @@ async function cleanupTempFiles(): Promise<{ tempFilesRemoved: number; bytesFree
   let bytesFreed = 0;
 
   const tempDirs = [
-    "/tmp/bharat-directory",
+    "/tmp/verifiedbusiness",
     path.join(process.cwd(), ".tmp"),
   ];
 

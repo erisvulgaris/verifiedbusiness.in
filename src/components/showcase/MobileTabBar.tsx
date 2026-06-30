@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Home, Compass, LayoutGrid, MapPin, Heart } from "lucide-react";
+import { Home, Compass, MapPin, Heart, Shield } from "lucide-react";
 import type { ViewKey } from "./TopNav";
 import { useFavorites } from "./FavoritesContext";
 
@@ -21,9 +21,9 @@ import { useFavorites } from "./FavoritesContext";
 const TABS: { key: ViewKey; label: string; icon: typeof Home }[] = [
   { key: "home", label: "Home", icon: Home },
   { key: "category", label: "Browse", icon: Compass },
-  { key: "all-categories", label: "Categories", icon: LayoutGrid },
   { key: "locations", label: "Locations", icon: MapPin },
   { key: "favorites", label: "Saved", icon: Heart },
+  { key: "admin-dashboard", label: "Admin", icon: Shield },
 ];
 
 export function MobileTabBar({
@@ -52,7 +52,8 @@ export function MobileTabBar({
             activeView === tab.key ||
             (tab.key === "category" && activeView === "business") ||
             (tab.key === "category" && activeView === "search") ||
-            (tab.key === "category" && activeView === "compare");
+            (tab.key === "category" && activeView === "compare") ||
+            (tab.key === "admin-dashboard" && activeView.startsWith("admin-"));
           const Icon = tab.icon;
           const showBadge = tab.key === "favorites" && favorites.length > 0;
 
