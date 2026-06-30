@@ -18,6 +18,7 @@ import {
   useCommandPaletteShortcut,
 } from "@/components/showcase/CommandPalette";
 import { MobileTabBar } from "@/components/showcase/MobileTabBar";
+import { ErrorBoundary, useGlobalErrorHandler } from "@/components/showcase/ErrorBoundary";
 import { RecentlyViewedProvider } from "@/components/showcase/RecentlyViewedContext";
 import { FavoritesProvider } from "@/components/showcase/FavoritesContext";
 import { CompareProvider } from "@/components/showcase/CompareContext";
@@ -28,6 +29,9 @@ export default function Page() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Attach global error handlers (window.onerror, unhandledrejection)
+  useGlobalErrorHandler();
 
   // Scroll to top on view change for clean transitions
   useEffect(() => {
@@ -91,6 +95,7 @@ export default function Page() {
             />
 
             <main className="flex-1 pb-20 lg:pb-0" id="main-content" tabIndex={-1}>
+              <ErrorBoundary>
               {view === "home" && (
                 <HomepageView
                   onNavigate={handleNavigate}
@@ -159,6 +164,7 @@ export default function Page() {
                   onBack={() => setView("detail")}
                 />
               )}
+              </ErrorBoundary>
             </main>
 
             <Footer

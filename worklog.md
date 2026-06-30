@@ -341,3 +341,55 @@ Final stats:
 - JSON-LD structured data for SEO
 - Mobile bottom tab bar + desktop top nav
 - Lint: clean. Dev server: 200 responses. 0 runtime errors.
+
+---
+Task ID: ENG-1
+Agent: main
+Task: Comprehensive engineering quality improvement — config fixes, health checks, maintenance cron, error boundary, env validation, structured logging, schema alignment, documentation
+
+Work Log:
+- AUDIT: Reviewed entire codebase — schema, API routes, components, config, env
+- Found 10 critical issues:
+  1. next.config.ts had ignoreBuildErrors: true (masks type errors)
+  2. reactStrictMode: false (misses bugs)
+  3. db.ts hardcoded log: ['query'] (noisy in prod)
+  4. Prisma schema had unrelated User/Post models (blog scaffold)
+  5. /api route was placeholder "Hello, world!"
+  6. No health check endpoint
+  7. No error boundary
+  8. No env variable validation
+  9. No structured logging
+  10. No tests, no maintenance cron
+
+- FIXED next.config.ts: removed ignoreBuildErrors, enabled reactStrictMode, added security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, X-DNS-Prefetch-Control), disabled poweredByHeader
+- FIXED db.ts: env-aware logging (query+warn+error in dev, warn+error in prod), graceful shutdown handlers (SIGINT/SIGTERM/beforeExit)
+- CREATED src/lib/env.ts: environment variable validation with typed config (NODE_ENV, DATABASE_URL, LOG_LEVEL, ENABLE_HEALTH_CHECKS, NEXTAUTH_SECRET), fail-fast on missing required vars
+- CREATED src/lib/logger.ts: structured logger with levels (debug/info/warn/error), JSON output in prod / pretty in dev, LOG_LEVEL filtering, createLogger() for child loggers with context
+- CREATED src/lib/health.ts: health check system with 5 checks (process, event-loop, disk, database, mock-data), liveness vs readiness probes, latency measurement, status aggregation, HealthReport type
+  - Process check: absolute heap thresholds (warn >500MB, fail >1GB), RSS fail >2GB
+  - Event loop lag: warn >50ms, fail >100ms
+  - Database: Prisma SELECT 1 with 2s timeout
+  - Mock data: import + structural validation + duplicate ID detection
+- CREATED src/lib/maintenance.ts: maintenance runner with health checks, temp file cleanup (>1h old), dev.log truncation (>5MB), recurring error pattern detection (3+ occurrences), memory growth trend tracking, health report file persistence (latest + 24 archived)
+- CREATED /api/health endpoint: GET liveness probe (fast), GET ?deep=true readiness probe (all checks), 503 on fail, no-cache headers
+- CREATED /api/maintenance/run endpoint: POST triggers maintenance cycle (CRON_SECRET protected in prod), GET reads latest report
+- REPLACED /api root: endpoint discovery metadata
+- CREATED ErrorBoundary component: class component catches render errors, graceful fallback with retry button, error details disclosure, useGlobalErrorHandler hook for window.onerror + unhandledrejection
+- WIRED ErrorBoundary + useGlobalErrorHandler into page.tsx
+- UPDATED Prisma schema: replaced unrelated User/Post scaffold with domain models (State, City, Locality, Category, Business, DayHours, Review, User, Account, Session), proper indexes, cascade deletes, JSON-encoded arrays for paymentMethods/highlights/tags
+- CREATED scripts/maintenance-cron.mjs: one-shot cron script, calls /api/maintenance/run, 30s timeout, exit codes (0=ok, 1=infra error, 2=critical issues)
+- CREATED scripts/maintenance-scheduler.mjs: long-running scheduler, 15-min interval, 60s initial delay, skip-if-running guard, clean SIGINT/SIGTERM shutdown
+- ADDED npm scripts: maintenance (one-shot), maintenance:scheduler (long-running)
+- UPDATED .gitignore: added /.health/ and /.tmp/
+- CREATED README.md: comprehensive architecture docs, design system overview, health check documentation, env variable reference, script reference
+
+Stage Summary:
+- 5 new lib modules (env, logger, health, maintenance + updated db)
+- 3 new API routes (/api/health, /api/maintenance/run, updated /api)
+- 1 new component (ErrorBoundary + useGlobalErrorHandler)
+- 2 new scripts (maintenance-cron.mjs, maintenance-scheduler.mjs)
+- Prisma schema aligned with domain (11 models, proper indexes)
+- All 5 health checks pass: process✓, event-loop✓, disk✓, database✓, mock-data✓
+- Lint: clean. All endpoints: 200. 0 runtime errors.
+- Scheduler verified working (starts, logs, calls maintenance API successfully)
+- Note: sandbox terminates background processes; in production the scheduler runs as systemd service / Docker sidecar / k8s CronJob

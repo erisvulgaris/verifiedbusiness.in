@@ -1,8 +1,14 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema for Bharat Directory.
+//
+// The application currently uses mock data (src/lib/directory-data.ts) for the
+// design-system showcase. These models define the target database schema for
+// when the app is wired to a real database. They mirror the TypeScript
+// interfaces in directory-data.ts so the migration path is straightforward.
+//
+// To enable database-backed listings:
+//  1. Run `bun run db:push` to create the tables.
+//  2. Replace the mock data imports in the views with Prisma queries.
+//  3. The component contracts (Business, Category, etc.) stay the same.
 
 generator client {
   provider = "prisma-client-js"
@@ -13,6 +19,153 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------- Geographic hierarchy ----------
+// Per the platform spec: Country > State > District > City > Locality > Pincode
+// Every level is a first-class SEO asset and gets its own page type.
+
+model State {
+  id           String   @id @default(cuid())
+  code         String   @unique // "KA", "MH", "DL"
+  name         String   @unique // "Karnataka"
+  capital      String
+  cityCount    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  cities       City[]
+  businesses   Business[]
+
+  @@index([code])
+}
+
+model City {
+  id        String   @id @default(cuid())
+  name      String
+  stateId   String
+  state     State    @relation(fields: [stateId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businesses Business[]
+  localities Locality[]
+
+  @@unique([name, stateId])
+  @@index([stateId])
+}
+
+model Locality {
+  id        String   @id @default(cuid())
+  name      String
+  cityId    String
+  city      City     @relation(fields: [cityId], references: [id])
+  pincode   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businesses Business[]
+
+  @@unique([name, cityId])
+  @@index([cityId])
+  @@index([pincode])
+}
+
+// ---------- Categories ----------
+
+model Category {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  slug          String   @unique
+  description   String
+  listingCount  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  businesses Business[]
+
+  @@index([slug])
+}
+
+// ---------- Businesses ----------
+
+model Business {
+  id              String   @id @default(cuid())
+  name            String
+  categorySlug    String
+  category        Category @relation(fields: [categorySlug], references: [slug])
+  rating          Float    @default(0)
+  reviewCount     Int      @default(0)
+  address         String
+  localityId      String?
+  locality        Locality? @relation(fields: [localityId], references: [id])
+  cityId          String
+  city            City     @relation(fields: [cityId], references: [id])
+  stateCode       String
+  state           State    @relation(fields: [stateCode], references: [code])
+  pincode         String
+  phone           String
+  website         String?
+  email           String?
+  hours           String
+  openNow         Boolean  @default(false)
+  verified        Boolean  @default(false)
+  paymentMethods  String   // JSON-encoded array
+  description     String
+  highlights      String   // JSON-encoded array
+  yearsActive     Int      @default(0)
+  priceRange      String?  // "$", "$$", "$$$", "$$$$"
+  photoCount      Int      @default(0)
+  tags            String?  // JSON-encoded array
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  reviews    Review[]
+  weeklyHours DayHours[]
+
+  @@index([categorySlug])
+  @@index([cityId])
+  @@index([stateCode])
+  @@index([pincode])
+  @@index([verified])
+  @@index([rating])
+}
+
+model DayHours {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  day        String   // "Mon", "Tue", etc.
+  open       String
+  close      String
+  closed     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([businessId, day])
+  @@index([businessId])
+}
+
+// ---------- Reviews ----------
+
+model Review {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  author     String
+  initials   String
+  rating     Int // 1-5
+  date       String
+  text       String
+  helpful    Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([rating])
+}
+
+// ---------- User accounts (for future auth) ----------
+// Retained from scaffold for NextAuth.js integration.
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -21,12 +174,33 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
 }
