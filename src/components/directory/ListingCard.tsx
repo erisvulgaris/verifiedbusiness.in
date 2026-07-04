@@ -15,6 +15,7 @@ import type { Business } from "@/lib/directory-data";
 import {
   CategoryChip,
   OpenBadge,
+  PlanBadge,
   RatingBadge,
   UnverifiedBadge,
   VerifiedBadge,
@@ -23,6 +24,7 @@ import { useFavorites } from "@/components/showcase/FavoritesContext";
 import { useCompare } from "@/components/showcase/CompareContext";
 import { useDirectoryToast } from "@/components/showcase/useDirectoryToast";
 import { EmptyStateIllustration } from "./EmptyStateIllustration";
+import { isBusinessOpen } from "@/lib/business-hours";
 
 /**
  * ListingCard — the workhorse of any directory page.
@@ -112,6 +114,12 @@ export function ListingCard({
             ) : (
               <UnverifiedBadge />
             )}
+            {business.subscription?.plan === "yearly" && business.subscription.status === "active" && (
+              <PlanBadge plan="yearly" />
+            )}
+            {business.subscription?.plan === "monthly" && business.subscription.status === "active" && (
+              <PlanBadge plan="monthly" />
+            )}
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -168,7 +176,7 @@ export function ListingCard({
           />
           <RatingBadge rating={business.rating} reviewCount={business.reviewCount} />
         </span>
-        <OpenBadge open={business.openNow} />
+        <OpenBadge open={isBusinessOpen(business.weeklyHours)} />
       </div>
 
       {/* Meta rows: address / hours / payment */}

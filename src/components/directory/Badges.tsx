@@ -186,3 +186,38 @@ export function RatingBadge({
     </span>
   );
 }
+
+/**
+ * PlanBadge — shows the subscription plan (Monthly/Yearly) on listing cards
+ * and detail pages. Builds trust + indicates premium placement.
+ *
+ * Yearly = "Featured" (gold-ish accent), Monthly = "Premium" (accent blue)
+ */
+export function PlanBadge({
+  plan,
+  className,
+}: {
+  plan: "monthly" | "yearly";
+  className?: string;
+}) {
+  const isYearly = plan === "yearly";
+  const label = isYearly ? "★ Featured" : "Premium";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 font-medium leading-none px-2 py-[3px] rounded-md",
+        className,
+      )}
+      style={{
+        backgroundColor: isYearly ? "var(--color-accent)" : "var(--color-accent-light)",
+        color: isYearly ? "#FFFFFF" : "var(--color-accent)",
+        fontSize: "var(--text-xs)",
+        fontFamily: "var(--font-inter), sans-serif",
+        fontWeight: 600,
+        letterSpacing: "0.2px",
+      }}
+    >
+      {label}
+    </span>
+  );
+}

@@ -431,3 +431,42 @@ Stage Summary:
 - 1 new lib: admin-data.ts (8 helper functions)
 - 1 new component folder: src/components/admin/ (6 files)
 - Lint: clean. Health: 5/5 pass. API: VerifiedBusiness.in API v1.0.0. 0 errors.
+
+---
+Task ID: UX-1
+Agent: main
+Task: Continuous UI/UX improvement sprint — bug fixes, plan badges, dynamic hours, keyboard shortcuts, print, CSV export
+
+Work Log:
+- AUDIT: Found 8 UI/UX issues via browser testing:
+  1. Category listing showed ALL businesses regardless of category (critical bug)
+  2. No plan badge on detail page or listing cards
+  3. Open/closed status was static (hardcoded in data, not computed)
+  4. No loading skeletons on search/category
+  5. No keyboard shortcuts overlay
+  6. No print stylesheet for business detail
+  7. No CSV export in admin
+  8. Title/breadcrumbs hardcoded to "Restaurants in Bengaluru"
+
+- FIX 1 — Category filter bug: CategoryListingView now accepts categorySlug + cityName props, filters businesses by category slug. Homepage passes slug when category tile clicked. AllCategoriesView passes slug too. Title/breadcrumbs dynamically render "Restaurants in India" (or specific city). Page.tsx tracks activeCategorySlug + activeCityName state. Verified: clicking Restaurants shows only 4 restaurants (Sankalp, 6 Ballygunge, Indian Accent, Tunday Kababi) across 4 cities.
+
+- FIX 2 — Plan badges: Created PlanBadge component in Badges.tsx (yearly = "★ Featured" with accent bg, monthly = "Premium" with light bg). Added to ListingCard (next to VerifiedBadge) and BusinessDetailHeader. Only shows for active paid subscriptions. Verified: "★ Featured" and "Premium" badges render on homepage listings + detail page.
+
+- FIX 3 — Dynamic open/closed: Created src/lib/business-hours.ts with parseTimeToMinutes(), getCurrentDay(), isBusinessOpen(), getOpenStatus(). Handles overnight ranges, 24-hour businesses, closed days. Updated ListingCard + BusinessDetail to use isBusinessOpen(weeklyHours) instead of static openNow. Updated "At a glance" fact card to show "Open until 11:30 PM" / "Opens at 9:00 AM" / "Closed". Verified: Allen Career Institute (closed Sundays in data) correctly shows "Open now" on Saturday 6 PM.
+
+- FIX 4 — Loading skeletons: CategoryListingView shows ListingCardSkeleton grid for 350ms on mount (one-time useEffect timer, lint-compliant). SearchResultsView kept instant (no artificial delay needed). Verified: skeleton shimmer appears briefly when switching categories.
+
+- FIX 5 — Keyboard shortcuts overlay: Created KeyboardShortcutsOverlay component. Press `?` (Shift+/) to open. Shows 3 groups: Navigation (⌘K, ?, g+h, g+b, g+a, g+f, g+c), Command palette (↑↓ ↵ Esc), Business detail (f, c). Close with Esc or click outside. Created KeyboardHintButton — floating "?" button bottom-right, appears after 2s, auto-hides after 12s, click to open overlay. Added fadeInUp keyframe to globals.css. Verified: overlay opens via `?` key, closes via Esc.
+
+- FIX 6 — Print stylesheet: Added @media print rules to globals.css — hides nav/footer/buttons/aside, white bg, black text, full width, page breaks before related listings, shows URLs after links. Added Printer icon button to BusinessDetail ContactActions. Verified: Print button present on detail page.
+
+- FIX 7 — CSV export: Created src/lib/csv-export.ts with toCsv() + exportToCsv() helpers (handles commas/quotes/newlines, BOM for Excel UTF-8). Added "Export CSV" button to AdminBusinessesView header. Exports 10 columns: name, category, city, phone, rating, reviews, verified, plan, status, amount. Verified: button click triggers download without errors.
+
+- FIX 8 — Icon import bug: KeyboardShortcutsOverlay imported non-existent `Escape` icon from lucide-react → caused 500 on /api/health. Fixed by replacing with XCircle.
+
+Stage Summary:
+- 3 bugs fixed (category filter, icon import, stale cache)
+- 5 new features (plan badges, dynamic hours, keyboard overlay, print, CSV export)
+- 3 new files (business-hours.ts, csv-export.ts, KeyboardShortcutsOverlay.tsx)
+- Lint: clean. Health: 5/5 pass (after icon fix). 0 console errors.
+- Browser-verified: category filter, plan badges, dynamic open status, keyboard overlay, print button, CSV export all working.

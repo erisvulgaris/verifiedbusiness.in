@@ -11,11 +11,13 @@ import {
   Star,
   Copy,
   Check,
+  Printer,
 } from "lucide-react";
 import { useState } from "react";
 import type { Business } from "@/lib/directory-data";
-import { CategoryChip, OpenBadge, RatingBadge, VerifiedBadge } from "./Badges";
+import { CategoryChip, OpenBadge, PlanBadge, RatingBadge, VerifiedBadge } from "./Badges";
 import { useDirectoryToast } from "@/components/showcase/useDirectoryToast";
+import { isBusinessOpen } from "@/lib/business-hours";
 
 /**
  * BusinessDetailHeader — detail page hero.
@@ -59,7 +61,13 @@ export function BusinessDetailHeader({
           <div className="flex flex-wrap items-center gap-2">
             <CategoryChip label={business.category} variant="compact" />
             {business.verified && <VerifiedBadge />}
-            <OpenBadge open={business.openNow} />
+            <OpenBadge open={isBusinessOpen(business.weeklyHours)} />
+            {business.subscription?.plan === "yearly" && business.subscription.status === "active" && (
+              <PlanBadge plan="yearly" />
+            )}
+            {business.subscription?.plan === "monthly" && business.subscription.status === "active" && (
+              <PlanBadge plan="monthly" />
+            )}
           </div>
 
           {/* Rating row */}
@@ -237,6 +245,25 @@ export function ContactActions({
         }}
       >
         {copied ? <Check size={18} strokeWidth={2.5} /> : <Copy size={18} strokeWidth={2} />}
+      </button>
+
+      {/* Print button */}
+      <button
+        type="button"
+        onClick={() => {
+          if (typeof window !== "undefined") window.print();
+        }}
+        aria-label="Print business details"
+        title="Print"
+        className="inline-flex items-center justify-center transition-colors duration-150 hover:text-[var(--color-accent)]"
+        style={{
+          color: "var(--color-text-tertiary)",
+          width: 44,
+          height: 44,
+          borderRadius: "var(--radius-md)",
+        }}
+      >
+        <Printer size={18} strokeWidth={2} />
       </button>
     </div>
   );

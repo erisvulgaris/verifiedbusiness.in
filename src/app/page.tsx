@@ -24,6 +24,7 @@ import {
 } from "@/components/showcase/CommandPalette";
 import { MobileTabBar } from "@/components/showcase/MobileTabBar";
 import { ErrorBoundary, useGlobalErrorHandler } from "@/components/showcase/ErrorBoundary";
+import { KeyboardShortcutsOverlay, KeyboardHintButton } from "@/components/showcase/KeyboardShortcutsOverlay";
 import { RecentlyViewedProvider } from "@/components/showcase/RecentlyViewedContext";
 import { FavoritesProvider } from "@/components/showcase/FavoritesContext";
 import { CompareProvider } from "@/components/showcase/CompareContext";
@@ -32,6 +33,8 @@ export default function Page() {
   const [view, setView] = useState<ViewKey>("home");
   const [businessId, setBusinessId] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategorySlug, setActiveCategorySlug] = useState<string | undefined>(undefined);
+  const [activeCityName, setActiveCityName] = useState<string | undefined>(undefined);
   const [searchLocation, setSearchLocation] = useState("");
   const [paletteOpen, setPaletteOpen] = useState(false);
 
@@ -108,10 +111,17 @@ export default function Page() {
                   onSearch={handleSearch}
                   onViewAllCategories={() => setView("all-categories")}
                   onViewLocations={() => setView("locations")}
+                  onSelectCategory={(slug) => {
+                    setActiveCategorySlug(slug);
+                    setActiveCityName(undefined);
+                    setView("category");
+                  }}
                 />
               )}
               {view === "category" && (
                 <CategoryListingView
+                  categorySlug={activeCategorySlug}
+                  cityName={activeCityName}
                   onOpenBusiness={handleOpenBusiness}
                   onNavigateHome={() => setView("home")}
                 />
@@ -136,7 +146,11 @@ export default function Page() {
               )}
               {view === "all-categories" && (
                 <AllCategoriesView
-                  onNavigateCategory={() => setView("category")}
+                  onNavigateCategory={(slug) => {
+                    setActiveCategorySlug(slug);
+                    setActiveCityName(undefined);
+                    setView("category");
+                  }}
                   onNavigateHome={() => setView("home")}
                 />
               )}
@@ -225,6 +239,10 @@ export default function Page() {
             onOpenBusiness={handleOpenBusiness}
             onSearch={handleSearch}
           />
+
+          {/* Keyboard shortcuts overlay — press ? to open */}
+          <KeyboardShortcutsOverlay />
+          <KeyboardHintButton />
         </RecentlyViewedProvider>
       </CompareProvider>
     </FavoritesProvider>

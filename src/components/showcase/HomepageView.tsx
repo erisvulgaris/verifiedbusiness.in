@@ -23,12 +23,14 @@ export function HomepageView({
   onSearch,
   onViewAllCategories,
   onViewLocations,
+  onSelectCategory,
 }: {
   onNavigate?: (view: "category" | "detail") => void;
   onOpenBusiness?: (id: string) => void;
   onSearch?: (q: { query: string; location: string }) => void;
   onViewAllCategories?: () => void;
   onViewLocations?: () => void;
+  onSelectCategory?: (slug: string) => void;
 }) {
   const { recentlyViewed } = useRecentlyViewed();
   useDocumentTitle("VerifiedBusiness.in — Premium Local Business Directory for India");
@@ -209,7 +211,7 @@ export function HomepageView({
             <CategoryTile
               key={cat.id}
               category={cat}
-              onClick={() => onNavigate?.("category")}
+              onClick={() => onSelectCategory?.(cat.slug) ?? onNavigate?.("category")}
             />
           ))}
         </div>

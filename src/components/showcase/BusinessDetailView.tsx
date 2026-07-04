@@ -16,6 +16,7 @@ import { useRecentlyViewed } from "./RecentlyViewedContext";
 import { useFavorites } from "./FavoritesContext";
 import { useCompare } from "./CompareContext";
 import { useBusinessJsonLd, useDocumentTitle } from "./SeoStructuredData";
+import { getOpenStatus } from "@/lib/business-hours";
 import { Heart, GitCompare, Star, PencilLine } from "lucide-react";
 import { useDirectoryToast } from "./useDirectoryToast";
 
@@ -382,7 +383,7 @@ export function BusinessDetailView({
                 <FactRow label="Locality" value={business.locality} />
                 <FactRow label="Pincode" value={business.pincode} />
                 <FactRow label="Years active" value={`${business.yearsActive}+ years`} />
-                <FactRow label="Status" value={business.openNow ? "Open now" : "Closed"} />
+                <FactRow label="Status" value={getOpenStatus(business.weeklyHours).label} />
               </dl>
             </div>
 

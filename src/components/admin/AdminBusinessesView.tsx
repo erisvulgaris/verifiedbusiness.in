@@ -15,9 +15,11 @@ import {
   BadgeCheck,
   Eye,
   Star,
+  Download,
 } from "lucide-react";
 import type { ViewKey } from "@/components/showcase/TopNav";
 import { useDocumentTitle } from "@/components/showcase/SeoStructuredData";
+import { exportToCsv } from "@/lib/csv-export";
 
 export function AdminBusinessesView({
   onViewChange,
@@ -134,9 +136,32 @@ export function AdminBusinessesView({
       title="Businesses"
       subtitle={`${filtered.length} of ${businesses.length} businesses`}
       actions={
-        <AdminButton variant="secondary" size="sm" onClick={() => onViewChange("admin-dashboard")}>
-          Back to dashboard
-        </AdminButton>
+        <div className="flex items-center gap-2">
+          <AdminButton
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              exportToCsv(`verifiedbusiness-listings-${Date.now()}.csv`, filtered, [
+                { key: "name", label: "Business Name" },
+                { key: "category", label: "Category" },
+                { key: "city", label: "City" },
+                { key: "phone", label: "Phone" },
+                { key: "rating", label: "Rating" },
+                { key: "reviewCount", label: "Reviews" },
+                { key: "verified", label: "Verified", format: (b) => (b.verified ? "Yes" : "No") },
+                { key: "subscription.plan", label: "Plan", format: (b) => b.subscription.plan },
+                { key: "subscription.status", label: "Status", format: (b) => b.subscription.status },
+                { key: "subscription.amount", label: "Amount (₹)", format: (b) => b.subscription.amount },
+              ]);
+            }}
+          >
+            <Download size={14} strokeWidth={2.5} />
+            Export CSV
+          </AdminButton>
+          <AdminButton variant="secondary" size="sm" onClick={() => onViewChange("admin-dashboard")}>
+            Back to dashboard
+          </AdminButton>
+        </div>
       }
     >
       {/* Filter bar */}

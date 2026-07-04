@@ -253,6 +253,18 @@
   *::-webkit-scrollbar-track {
     background: transparent;
   }
+
+  /* fadeInUp — for hint button + toast-like UI */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
   *::-webkit-scrollbar-thumb {
     background-color: var(--color-border-strong);
     border-radius: 999px;
@@ -276,4 +288,74 @@
   }
   .skeleton-shimmer::after { display: none; }
   .pulse-dot::before { display: none; }
+}
+
+/* ========================================================================
+   PRINT STYLESHEET — business detail pages
+   Hides nav, footer, sidebar, buttons. Shows only business info.
+   ======================================================================== */
+@media print {
+  /* Hide everything not needed on paper */
+  header[style*="sticky"],
+  nav,
+  footer,
+  .directory-container > aside,
+  .directory-container > div > aside,
+  button,
+  [class*="sticky bottom-0"],
+  [class*="MobileTabBar"],
+  [class*="CommandPaletteTrigger"],
+  [class*="KeyboardHintButton"] {
+    display: none !important;
+  }
+
+  /* Use full width, no padding */
+  .directory-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* White background, black text */
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 11pt;
+  }
+
+  /* Headings in black */
+  h1, h2, h3, h4, h5, h6 {
+    color: #000000 !important;
+  }
+
+  /* Expand main content to full width */
+  main {
+    padding: 0 !important;
+  }
+
+  /* Force two-column detail layout to single column */
+  .grid {
+    display: block !important;
+  }
+
+  /* Page break before related listings */
+  section:last-of-type {
+    page-break-before: always;
+  }
+
+  /* Avoid breaking inside cards */
+  article, section {
+    page-break-inside: avoid;
+  }
+
+  /* Show URLs after links */
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #666;
+  }
+
+  /* Hide shadows for print clarity */
+  * {
+    box-shadow: none !important;
+  }
 }

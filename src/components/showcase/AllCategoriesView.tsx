@@ -11,7 +11,7 @@ export function AllCategoriesView({
   onNavigateCategory,
   onNavigateHome,
 }: {
-  onNavigateCategory?: () => void;
+  onNavigateCategory?: (slug?: string) => void;
   onNavigateHome?: () => void;
 }) {
   const [search, setSearch] = useState("");
@@ -164,7 +164,7 @@ export function AllCategoriesView({
               <CategoryTile
                 key={cat.id}
                 category={cat}
-                onClick={() => onNavigateCategory?.()}
+                onClick={() => onNavigateCategory?.(cat.slug)}
               />
             ))}
           </div>
@@ -190,7 +190,7 @@ export function AllCategoriesView({
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => onNavigateCategory?.()}
+                onClick={() => onNavigateCategory?.(cat.slug)}
                 className="group flex items-start gap-4 text-left border border-[var(--color-border)] rounded-[16px] bg-[var(--color-surface)] p-5 transition-all duration-200 hover:border-[var(--color-accent-border)] hover:shadow-[var(--shadow-sm)]"
               >
                 <div

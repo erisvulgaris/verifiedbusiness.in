@@ -1,21 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ListingCard, ListingCardSkeleton, ListingCardEmpty } from "@/components/directory/ListingCard";
 import { Breadcrumbs } from "@/components/directory/Breadcrumbs";
 import { SearchBar } from "@/components/directory/SearchBar";
-import { BUSINESSES, FILTER_OPTIONS, type Business } from "@/lib/directory-data";
+import { BUSINESSES, CATEGORIES, FILTER_OPTIONS, type Business } from "@/lib/directory-data";
 import { SlidersHorizontal, X, Check } from "lucide-react";
 import { useDocumentTitle } from "./SeoStructuredData";
 
 export function CategoryListingView({
   onOpenBusiness,
   onNavigateHome,
+  categorySlug,
+  cityName,
 }: {
   onOpenBusiness?: (id: string) => void;
   onNavigateHome?: () => void;
+  categorySlug?: string;
+  cityName?: string;
 }) {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [verification, setVerification] = useState<"verified" | "all">("all");
   const [minRating, setMinRating] = useState<number | null>(null);
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
@@ -25,7 +29,21 @@ export function CategoryListingView({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
-  useDocumentTitle("Restaurants in Bengaluru — Verified Listings | VerifiedBusiness.in");
+  // Resolve category + city from props (with sensible defaults)
+  const activeCategory = CATEGORIES.find((c) => c.slug === categorySlug) ?? CATEGORIES[0];
+  const activeCity = cityName; // undefined = all India
+  // Look up state from first business matching this city
+  const cityBusiness = activeCity ? BUSINESSES.find((b) => b.city === activeCity) : undefined;
+  const activeState = cityBusiness?.state ?? "India";
+
+  const locationLabel = activeCity ?? "India";
+  useDocumentTitle(`${activeCategory.name} in ${locationLabel} — Verified Listings | VerifiedBusiness.in`);
+
+  // Clear initial loading state after mount (one-time, external timer sync)
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 350);
+    return () => clearTimeout(t);
+  }, []);
 
   const togglePayment = (method: string) => {
     setSelectedPayments((prev) =>
@@ -50,8 +68,13 @@ export function CategoryListingView({
     new Set(BUSINESSES.flatMap((b) => b.tags ?? [])),
   ).sort();
 
-  // Apply filters
+  // Apply filters — start with category + city filter
   let filtered = BUSINESSES.filter((b) => {
+    // Category filter (the page's whole point)
+    if (b.categorySlug !== activeCategory.slug) return false;
+    // City filter (only if explicitly specified)
+    if (cityName && b.city !== cityName) return false;
+    // User-applied filters
     if (verification === "verified" && !b.verified) return false;
     if (minRating !== null && b.rating < minRating) return false;
     if (selectedPayments.length > 0) {
@@ -102,9 +125,9 @@ export function CategoryListingView({
       <Breadcrumbs
         items={[
           { label: "India", onClick: onNavigateHome },
-          { label: "Karnataka", onClick: onNavigateHome },
-          { label: "Bengaluru", onClick: onNavigateHome },
-          { label: "Restaurants" },
+          ...(activeState !== "India" ? [{ label: activeState, onClick: onNavigateHome }] : []),
+          ...(activeCity ? [{ label: activeCity, onClick: onNavigateHome }] : []),
+          { label: activeCategory.name },
         ]}
       />
 
@@ -119,7 +142,7 @@ export function CategoryListingView({
             color: "var(--color-text-primary)",
           }}
         >
-          Restaurants in Bengaluru
+          {activeCategory.name} in {locationLabel}
         </h1>
         <p
           className="mt-2"
