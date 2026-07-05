@@ -627,8 +627,8 @@ export function ListBusinessView({
                 >
                   I confirm that the information provided is accurate and I am
                   authorised to list this business. I agree to the platform's{" "}
-                  <a href="#" style={{ color: "var(--color-accent)" }}>Terms of Service</a> and{" "}
-                  <a href="#" style={{ color: "var(--color-accent)" }}>Listing Policy</a>.
+                  <a href="/terms" style={{ color: "var(--color-accent)" }}>Terms of Service</a> and{" "}
+                  <a href="/listing-policy" style={{ color: "var(--color-accent)" }}>Listing Policy</a>.
                 </span>
               </label>
             </div>

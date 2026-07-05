@@ -18,6 +18,8 @@ import { AdminBusinessesView } from "@/components/admin/AdminBusinessesView";
 import { AdminReviewsView } from "@/components/admin/AdminReviewsView";
 import { AdminSubscriptionsView } from "@/components/admin/AdminSubscriptionsView";
 import { AdminSettingsView } from "@/components/admin/AdminSettingsView";
+import { AdminAnalyticsView } from "@/components/admin/AdminAnalyticsView";
+import { AdminAuditLogView } from "@/components/admin/AdminAuditLogView";
 import {
   CommandPalette,
   useCommandPaletteShortcut,
@@ -25,6 +27,8 @@ import {
 import { MobileTabBar } from "@/components/showcase/MobileTabBar";
 import { ErrorBoundary, useGlobalErrorHandler } from "@/components/showcase/ErrorBoundary";
 import { KeyboardShortcutsOverlay, KeyboardHintButton } from "@/components/showcase/KeyboardShortcutsOverlay";
+import { BackToTopButton, ScrollProgressBar } from "@/components/showcase/BackToTopButton";
+import { track } from "@/lib/analytics";
 import { RecentlyViewedProvider } from "@/components/showcase/RecentlyViewedContext";
 import { FavoritesProvider } from "@/components/showcase/FavoritesContext";
 import { CompareProvider } from "@/components/showcase/CompareContext";
@@ -46,6 +50,8 @@ export default function Page() {
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "auto" });
     }
+    // Track page view
+    track.pageView(view);
   }, [view, businessId]);
 
   // Register Cmd+K shortcut
@@ -54,6 +60,7 @@ export default function Page() {
   const handleOpenBusiness = (id: string) => {
     setBusinessId(id);
     setView("detail");
+    track.businessViewed(id, id); // In production, pass actual business name
   };
 
   const handleNavigate = (target: "category" | "detail") => {
@@ -64,6 +71,7 @@ export default function Page() {
     setSearchQuery(q.query);
     setSearchLocation(q.location);
     setView("search");
+    track.search(q.query, 0, q.location);
   };
 
   return (
@@ -214,6 +222,18 @@ export default function Page() {
                   onExitAdmin={() => setView("home")}
                 />
               )}
+              {view === "admin-analytics" && (
+                <AdminAnalyticsView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
+                />
+              )}
+              {view === "admin-audit-log" && (
+                <AdminAuditLogView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
+                />
+              )}
               </ErrorBoundary>
             </main>
 
@@ -243,6 +263,10 @@ export default function Page() {
           {/* Keyboard shortcuts overlay — press ? to open */}
           <KeyboardShortcutsOverlay />
           <KeyboardHintButton />
+
+          {/* Scroll progress + back to top */}
+          <ScrollProgressBar />
+          <BackToTopButton />
         </RecentlyViewedProvider>
       </CompareProvider>
     </FavoritesProvider>

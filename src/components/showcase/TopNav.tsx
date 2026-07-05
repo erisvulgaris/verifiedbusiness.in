@@ -30,7 +30,9 @@ export type ViewKey =
   | "admin-businesses"
   | "admin-reviews"
   | "admin-subscriptions"
-  | "admin-settings";
+  | "admin-settings"
+  | "admin-analytics"
+  | "admin-audit-log";
 
 interface NavItem {
   key: ViewKey | "business";
@@ -396,10 +398,15 @@ export function Footer({
             © 2026 VerifiedBusiness.in · Made in India · Light Mode v1.0
           </p>
           <div className="flex items-center gap-4">
-            {["Privacy", "Terms", "Cookies", "Sitemap"].map((l) => (
+            {[
+              { label: "Privacy", href: "/privacy" },
+              { label: "Terms", href: "/terms" },
+              { label: "Cookies", href: "/cookies" },
+              { label: "Sitemap", href: "/sitemap.xml" },
+            ].map((l) => (
               <a
-                key={l}
-                href="#"
+                key={l.label}
+                href={l.href}
                 className="transition-colors hover:text-[var(--color-accent)]"
                 style={{
                   color: "var(--color-text-tertiary)",
@@ -407,7 +414,7 @@ export function Footer({
                   fontSize: "var(--text-xs)",
                 }}
               >
-                {l}
+                {l.label}
               </a>
             ))}
           </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runMaintenance } from "@/lib/maintenance";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/maintenance/run
@@ -14,6 +15,10 @@ import { logger } from "@/lib/logger";
  * Security: in production, this endpoint requires a CRON_SECRET header.
  */
 export async function POST(request: Request) {
+  // Rate limit
+  const limited = checkRateLimit(request);
+  if (limited) return limited;
+
   // In production, require a secret header to prevent abuse
   if (process.env.NODE_ENV === "production") {
     const secret = process.env.CRON_SECRET;

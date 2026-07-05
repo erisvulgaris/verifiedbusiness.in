@@ -20,6 +20,8 @@ import {
   LayoutDashboard,
   CreditCard,
   Settings,
+  BarChart3,
+  ScrollText,
 } from "lucide-react";
 import { BUSINESSES, CATEGORIES, INDIA_STATES } from "@/lib/directory-data";
 import type { ViewKey } from "./TopNav";
@@ -175,6 +177,22 @@ export function CommandPalette({
       icon: Settings,
       group: "Admin",
       action: () => onNavigate("admin-settings"),
+    },
+    {
+      id: "nav-admin-analytics",
+      label: "Admin analytics",
+      hint: "User behavior",
+      icon: BarChart3,
+      group: "Admin",
+      action: () => onNavigate("admin-analytics"),
+    },
+    {
+      id: "nav-admin-audit-log",
+      label: "Admin audit log",
+      hint: "Compliance + security",
+      icon: ScrollText,
+      group: "Admin",
+      action: () => onNavigate("admin-audit-log"),
     },
     // Actions
     {

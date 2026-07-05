@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runLivenessChecks, runAllHealthChecks } from "@/lib/health";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
  * GET /api/health
@@ -14,6 +15,10 @@ import { logger } from "@/lib/logger";
  *  - ?deep=true — run ALL checks including database (slower, for readiness)
  */
 export async function GET(request: Request) {
+  // Rate limit
+  const limited = checkRateLimit(request);
+  if (limited) return limited;
+
   const url = new URL(request.url);
   const deep = url.searchParams.get("deep") === "true";
 
