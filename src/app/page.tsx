@@ -28,6 +28,7 @@ import { MobileTabBar } from "@/components/showcase/MobileTabBar";
 import { ErrorBoundary, useGlobalErrorHandler } from "@/components/showcase/ErrorBoundary";
 import { KeyboardShortcutsOverlay, KeyboardHintButton } from "@/components/showcase/KeyboardShortcutsOverlay";
 import { BackToTopButton, ScrollProgressBar } from "@/components/showcase/BackToTopButton";
+import { PageTransition } from "@/components/showcase/animations";
 import { track } from "@/lib/analytics";
 import { RecentlyViewedProvider } from "@/components/showcase/RecentlyViewedContext";
 import { FavoritesProvider } from "@/components/showcase/FavoritesContext";
@@ -112,6 +113,7 @@ export default function Page() {
 
             <main className="flex-1 pb-20 lg:pb-0" id="main-content" tabIndex={-1}>
               <ErrorBoundary>
+              <PageTransition viewKey={view}>
               {view === "home" && (
                 <HomepageView
                   onNavigate={handleNavigate}
@@ -234,6 +236,7 @@ export default function Page() {
                   onExitAdmin={() => setView("home")}
                 />
               )}
+              </PageTransition>
               </ErrorBoundary>
             </main>
 

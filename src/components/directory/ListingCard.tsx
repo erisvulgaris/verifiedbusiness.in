@@ -79,7 +79,7 @@ export function ListingCard({
         "transition-all duration-200 ease-out",
         "border border-[var(--color-border)] rounded-[10px]",
         "bg-[var(--color-surface)] p-5",
-        "hover:border-[var(--color-accent-border)] hover:shadow-[var(--shadow-md)]",
+        "hover:border-[var(--color-accent-border)] hover:shadow-[var(--shadow-md)] shadow-lift shimmer-border",
         "focus-within:border-[var(--color-accent-border)] focus-within:shadow-[var(--shadow-md)]",
         className,
       )}

@@ -14,6 +14,8 @@ import {
   BUSINESSES,
 } from "@/lib/directory-data";
 import { Sparkles, ArrowRight, TrendingUp, MapPin } from "lucide-react";
+import { motion } from "framer-motion";
+import { SPRING, AnimatedNumber, StaggerContainer, StaggerItem, FadeInOnScroll } from "./animations";
 import { useRecentlyViewed } from "./RecentlyViewedContext";
 import { useDocumentTitle } from "./SeoStructuredData";
 
@@ -49,22 +51,29 @@ export function HomepageView({
       />
 
       {/* ---------- HERO ---------- */}
-      <section className="mt-6 sm:mt-8">
-        <div className="max-w-3xl">
-          <span
+      <section className="mt-6 sm:mt-8 aurora-bg relative">
+        <div className="max-w-3xl relative z-10">
+          <motion.span
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...SPRING.snappy, delay: 0.05 }}
             className="inline-flex items-center gap-1.5 font-medium px-2.5 py-1 rounded-full"
             style={{
               backgroundColor: "var(--color-accent-light)",
               color: "var(--color-accent)",
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: "var(--text-xs)",
+              border: "1px solid var(--color-accent-border)",
             }}
           >
             <Sparkles size={12} strokeWidth={2.5} />
             India's premium business directory
-          </span>
+          </motion.span>
 
-          <h1
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...SPRING.gentle, delay: 0.1 }}
             className="mt-4 font-display font-bold leading-[1.05]"
             style={{
               fontSize: "clamp(var(--text-3xl), 6vw, var(--text-4xl))",
@@ -73,12 +82,13 @@ export function HomepageView({
             }}
           >
             Find the right local business,{" "}
-            <span style={{ color: "var(--color-accent)" }}>
-              anywhere in India.
-            </span>
-          </h1>
+            <span className="gradient-text">anywhere in India.</span>
+          </motion.h1>
 
-          <p
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...SPRING.gentle, delay: 0.18 }}
             className="mt-4 max-w-2xl"
             style={{
               color: "var(--color-text-secondary)",
@@ -90,7 +100,7 @@ export function HomepageView({
             Verified listings across all 28 states, 780+ districts, and 19,000+
             pincodes. Clean, confident, and built for India — not reskinned from
             a Western template.
-          </p>
+          </motion.p>
         </div>
 
         {/* Search bar */}
@@ -132,35 +142,47 @@ export function HomepageView({
 
         {/* Hero stats */}
         <dl className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-          {HERO_STATS.map((stat) => (
-            <div
-              key={stat.label}
-              className="border border-[var(--color-border)] rounded-[10px] bg-[var(--color-surface)] p-4"
-            >
-              <dt
-                style={{
-                  color: "var(--color-text-tertiary)",
-                  fontFamily: "var(--font-inter), sans-serif",
-                  fontSize: "var(--text-xs)",
-                  lineHeight: "16px",
-                  marginBottom: 6,
-                }}
+          {HERO_STATS.map((stat, i) => {
+            // Parse numeric value for animation (e.g., "1.2 Cr+" → 1.2, "4,000+" → 4000)
+            const numericMatch = stat.value.match(/[\d.]+/);
+            const numericValue = numericMatch ? parseFloat(numericMatch[0]) : 0;
+            const suffix = stat.value.replace(/[\d.]+/, "");
+            return (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...SPRING.gentle, delay: 0.3 + i * 0.08 }}
+                className="border border-[var(--color-border)] rounded-[10px] bg-[var(--color-surface)] p-4 shadow-lift"
               >
-                {stat.label}
-              </dt>
-              <dd
-                className="font-display font-bold"
-                style={{
-                  color: "var(--color-text-primary)",
-                  fontSize: "var(--text-2xl)",
-                  lineHeight: "32px",
-                  letterSpacing: "-0.3px",
-                }}
-              >
-                {stat.value}
-              </dd>
-            </div>
-          ))}
+                <dt
+                  style={{
+                    color: "var(--color-text-tertiary)",
+                    fontFamily: "var(--font-inter), sans-serif",
+                    fontSize: "var(--text-xs)",
+                    lineHeight: "16px",
+                    marginBottom: 6,
+                  }}
+                >
+                  {stat.label}
+                </dt>
+                <dd
+                  className="font-display font-bold"
+                  style={{
+                    color: "var(--color-text-primary)",
+                    fontSize: "var(--text-2xl)",
+                    lineHeight: "32px",
+                    letterSpacing: "-0.3px",
+                  }}
+                >
+                  <AnimatedNumber value={numericValue} format={(n) => {
+                    const formatted = numericValue < 10 ? n.toFixed(1) : Math.round(n).toLocaleString("en-IN");
+                    return formatted + suffix;
+                  }} />
+                </dd>
+              </motion.div>
+            );
+          })}
         </dl>
       </section>
 
@@ -206,15 +228,16 @@ export function HomepageView({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <StaggerContainer className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" staggerChildren={0.04}>
           {CATEGORIES.slice(0, 8).map((cat) => (
-            <CategoryTile
-              key={cat.id}
-              category={cat}
-              onClick={() => onSelectCategory?.(cat.slug) ?? onNavigate?.("category")}
-            />
+            <StaggerItem key={cat.id}>
+              <CategoryTile
+                category={cat}
+                onClick={() => onSelectCategory?.(cat.slug) ?? onNavigate?.("category")}
+              />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </section>
 
       {/* ---------- RECENTLY VIEWED (only if present) ---------- */}
@@ -427,15 +450,16 @@ export function HomepageView({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6" staggerChildren={0.06}>
           {BUSINESSES.slice(0, 4).map((b) => (
-            <ListingCard
-              key={b.id}
-              business={b}
-              onOpen={() => onOpenBusiness?.(b.id)}
-            />
+            <StaggerItem key={b.id}>
+              <ListingCard
+                business={b}
+                onOpen={() => onOpenBusiness?.(b.id)}
+              />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </section>
 
       {/* ---------- FAQ ---------- */}
@@ -486,8 +510,9 @@ export function HomepageView({
 
       {/* ---------- CTA STRIP ---------- */}
       <section className="mt-16 sm:mt-20">
+        <FadeInOnScroll>
         <div
-          className="border rounded-[16px] p-8 sm:p-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6"
+          className="border rounded-[16px] p-8 sm:p-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mesh-gradient glow-accent"
           style={{
             backgroundColor: "var(--color-surface)",
             borderColor: "var(--color-border)",
@@ -520,7 +545,7 @@ export function HomepageView({
           </div>
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 shrink-0 transition-all duration-150 hover:shadow-[var(--shadow-md)]"
+            className="inline-flex items-center justify-center gap-2 shrink-0 transition-all duration-150 hover:shadow-[var(--shadow-md)] glow-accent glow-accent-hover"
             style={{
               backgroundColor: "var(--color-accent)",
               color: "var(--color-text-inverse)",
@@ -530,13 +555,13 @@ export function HomepageView({
               lineHeight: "20px",
               borderRadius: "var(--radius-md)",
               padding: "14px 24px",
-              boxShadow: "var(--shadow-sm)",
             }}
           >
             Get started
             <ArrowRight size={16} strokeWidth={2.5} />
           </button>
         </div>
+        </FadeInOnScroll>
       </section>
     </div>
   );

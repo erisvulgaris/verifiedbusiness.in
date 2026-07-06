@@ -67,11 +67,10 @@ export function TopNav({
 
   return (
     <header
-      className="sticky top-0 z-50 border-b border-[var(--color-border)]"
+      className="sticky top-0 z-50 border-b border-[var(--color-border)] glass-strong"
       style={{
-        backgroundColor: "rgba(250, 250, 248, 0.92)",
-        backdropFilter: "saturate(180%) blur(12px)",
-        WebkitBackdropFilter: "saturate(180%) blur(12px)",
+        backdropFilter: "saturate(180%) blur(16px)",
+        WebkitBackdropFilter: "saturate(180%) blur(16px)",
       }}
     >
       <div className="directory-container !py-0">

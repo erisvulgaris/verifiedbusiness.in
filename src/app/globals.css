@@ -275,6 +275,164 @@
 }
 
 /* ========================================================================
+   PREMIUM EFFECTS — glassmorphism, mesh gradients, glows
+   ======================================================================== */
+
+/* Glassmorphism — frosted glass effect for nav + modals */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* Mesh gradient background — for hero sections */
+.mesh-gradient {
+  background-color: var(--color-base);
+  background-image:
+    radial-gradient(at 12% 18%, rgba(27, 79, 216, 0.08) 0px, transparent 50%),
+    radial-gradient(at 85% 15%, rgba(22, 163, 74, 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 85%, rgba(217, 119, 6, 0.04) 0px, transparent 50%),
+    radial-gradient(at 75% 60%, rgba(27, 79, 216, 0.05) 0px, transparent 50%);
+}
+
+/* Animated gradient text — for premium headings */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #6366f1 50%, var(--color-accent) 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 4s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Premium glow — for CTA buttons + badges */
+.glow-accent {
+  box-shadow:
+    0 0 0 1px rgba(27, 79, 216, 0.1),
+    0 4px 16px rgba(27, 79, 216, 0.15),
+    0 8px 32px rgba(27, 79, 216, 0.08);
+}
+
+.glow-accent-hover:hover {
+  box-shadow:
+    0 0 0 1px rgba(27, 79, 216, 0.15),
+    0 8px 24px rgba(27, 79, 216, 0.25),
+    0 12px 48px rgba(27, 79, 216, 0.12);
+}
+
+/* Shimmer border — for premium cards */
+.shimmer-border {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(27, 79, 216, 0.3) 50%,
+    transparent 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.shimmer-border:hover::before {
+  opacity: 1;
+}
+
+/* Floating animation — for hero decorative elements */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+.float-animation {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Premium skeleton — gradient shimmer */
+.premium-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 0%,
+    var(--color-surface) 50%,
+    var(--color-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: premium-shimmer 1.8s infinite;
+}
+@keyframes premium-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Smooth scale on hover for interactive elements */
+.hover-scale {
+  transition: transform 200ms var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+.hover-scale:active {
+  transform: scale(0.98);
+}
+
+/* Premium shadow lift — for cards on hover */
+.shadow-lift {
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+.shadow-lift:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px rgba(26, 25, 23, 0.08),
+    0 12px 40px rgba(26, 25, 23, 0.06),
+    0 0 0 1px var(--color-accent-border);
+}
+
+/* Aurora background — subtle animated gradient for hero */
+.aurora-bg {
+  position: relative;
+  overflow: hidden;
+}
+.aurora-bg::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(27, 79, 216, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 70% 60%, rgba(99, 102, 241, 0.05) 0%, transparent 40%);
+  animation: aurora-drift 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes aurora-drift {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(2%, -2%) rotate(120deg); }
+  66% { transform: translate(-2%, 2%) rotate(240deg); }
+}
+
+/* ========================================================================
    REDUCED MOTION — non-negotiable accessibility
    ======================================================================== */
 @media (prefers-reduced-motion: reduce) {
@@ -288,6 +446,10 @@
   }
   .skeleton-shimmer::after { display: none; }
   .pulse-dot::before { display: none; }
+  .aurora-bg::after { display: none; }
+  .float-animation { animation: none; }
+  .gradient-text { animation: none; }
+  .premium-skeleton { animation: none; }
 }
 
 /* ========================================================================

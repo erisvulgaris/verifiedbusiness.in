@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Building2,
@@ -176,7 +177,11 @@ export function KpiCard({
   accent?: boolean;
 }) {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      whileHover={{ y: -2 }}
       className="border rounded-[12px] p-5"
       style={{
         backgroundColor: accent ? "var(--color-accent)" : "var(--color-surface)",
@@ -239,7 +244,7 @@ export function KpiCard({
           {deltaPositive ? "▲" : "▼"} {delta}
         </p>
       )}
-    </div>
+    </motion.div>
   );
 }
 

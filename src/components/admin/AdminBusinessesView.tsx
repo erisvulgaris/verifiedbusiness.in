@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import { AdminLayout, StatusPill, AdminButton, AdminTable } from "./AdminLayout";
 import { BUSINESSES, SUBSCRIPTION_PLANS, type Business, type SubscriptionPlan } from "@/lib/directory-data";
 import { formatINR } from "@/lib/admin-data";
@@ -822,11 +823,14 @@ function Modal({
         className="absolute inset-0"
         style={{ backgroundColor: "rgba(26, 25, 23, 0.5)", backdropFilter: "blur(4px)" }}
       />
-      <div
-        className="relative w-full max-h-[90vh] overflow-y-auto border rounded-[16px]"
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.98, y: 5 }}
+        transition={{ type: "spring", stiffness: 350, damping: 28 }}
+        className="relative w-full max-h-[90vh] overflow-y-auto border rounded-[16px] glass-strong"
         style={{
           maxWidth,
-          backgroundColor: "var(--color-surface)",
           borderColor: "var(--color-border)",
           boxShadow: "var(--shadow-lg)",
         }}
@@ -862,7 +866,7 @@ function Modal({
           </button>
         </div>
         <div className="px-6 py-5">{children}</div>
-      </div>
+      </motion.div>
     </div>
   );
 }
