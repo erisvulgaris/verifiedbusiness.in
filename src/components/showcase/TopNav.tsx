@@ -32,7 +32,11 @@ export type ViewKey =
   | "admin-subscriptions"
   | "admin-settings"
   | "admin-analytics"
-  | "admin-audit-log";
+  | "admin-audit-log"
+  | "admin-users"
+  | "admin-content"
+  | "admin-system"
+  | "admin-support";
 
 interface NavItem {
   key: ViewKey | "business";

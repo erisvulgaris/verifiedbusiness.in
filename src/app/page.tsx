@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { TopNav, Footer, type ViewKey } from "@/components/showcase/TopNav";
 import { HomepageView } from "@/components/showcase/HomepageView";
 import { CategoryListingView } from "@/components/showcase/CategoryListingView";
@@ -13,13 +13,19 @@ import { CompareView } from "@/components/showcase/CompareView";
 import { FavoritesView } from "@/components/showcase/FavoritesView";
 import { ListBusinessView } from "@/components/showcase/ListBusinessView";
 import { WriteReviewView } from "@/components/showcase/WriteReviewView";
-import { AdminDashboardView } from "@/components/admin/AdminDashboardView";
-import { AdminBusinessesView } from "@/components/admin/AdminBusinessesView";
-import { AdminReviewsView } from "@/components/admin/AdminReviewsView";
-import { AdminSubscriptionsView } from "@/components/admin/AdminSubscriptionsView";
-import { AdminSettingsView } from "@/components/admin/AdminSettingsView";
-import { AdminAnalyticsView } from "@/components/admin/AdminAnalyticsView";
-import { AdminAuditLogView } from "@/components/admin/AdminAuditLogView";
+
+// Lazy-load admin views — they're heavy and only needed when accessing admin panel
+const AdminDashboardView = lazy(() => import("@/components/admin/AdminDashboardView").then(m => ({ default: m.AdminDashboardView })));
+const AdminBusinessesView = lazy(() => import("@/components/admin/AdminBusinessesView").then(m => ({ default: m.AdminBusinessesView })));
+const AdminReviewsView = lazy(() => import("@/components/admin/AdminReviewsView").then(m => ({ default: m.AdminReviewsView })));
+const AdminSubscriptionsView = lazy(() => import("@/components/admin/AdminSubscriptionsView").then(m => ({ default: m.AdminSubscriptionsView })));
+const AdminSettingsView = lazy(() => import("@/components/admin/AdminSettingsView").then(m => ({ default: m.AdminSettingsView })));
+const AdminAnalyticsView = lazy(() => import("@/components/admin/AdminAnalyticsView").then(m => ({ default: m.AdminAnalyticsView })));
+const AdminAuditLogView = lazy(() => import("@/components/admin/AdminAuditLogView").then(m => ({ default: m.AdminAuditLogView })));
+const AdminUsersView = lazy(() => import("@/components/admin/AdminUsersView").then(m => ({ default: m.AdminUsersView })));
+const AdminContentView = lazy(() => import("@/components/admin/AdminContentView").then(m => ({ default: m.AdminContentView })));
+const AdminSystemView = lazy(() => import("@/components/admin/AdminSystemView").then(m => ({ default: m.AdminSystemView })));
+const AdminSupportView = lazy(() => import("@/components/admin/AdminSupportView").then(m => ({ default: m.AdminSupportView })));
 import {
   CommandPalette,
   useCommandPaletteShortcut,
@@ -194,47 +200,93 @@ export default function Page() {
                 />
               )}
               {view === "admin-dashboard" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
                 <AdminDashboardView
                   onViewChange={(v) => setView(v)}
                   onExitAdmin={() => setView("home")}
                 />
+                </Suspense>
               )}
               {view === "admin-businesses" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
                 <AdminBusinessesView
                   onViewChange={(v) => setView(v)}
                   onExitAdmin={() => setView("home")}
                   onOpenBusiness={handleOpenBusiness}
                 />
+                </Suspense>
               )}
               {view === "admin-reviews" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
                 <AdminReviewsView
                   onViewChange={(v) => setView(v)}
                   onExitAdmin={() => setView("home")}
                 />
+                </Suspense>
               )}
               {view === "admin-subscriptions" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
                 <AdminSubscriptionsView
                   onViewChange={(v) => setView(v)}
                   onExitAdmin={() => setView("home")}
                 />
+                </Suspense>
               )}
               {view === "admin-settings" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
                 <AdminSettingsView
                   onViewChange={(v) => setView(v)}
                   onExitAdmin={() => setView("home")}
                 />
+                </Suspense>
               )}
               {view === "admin-analytics" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
                 <AdminAnalyticsView
                   onViewChange={(v) => setView(v)}
                   onExitAdmin={() => setView("home")}
                 />
+                </Suspense>
               )}
               {view === "admin-audit-log" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
                 <AdminAuditLogView
                   onViewChange={(v) => setView(v)}
                   onExitAdmin={() => setView("home")}
                 />
+                </Suspense>
+              )}
+              {view === "admin-users" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
+                <AdminUsersView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
+                />
+                </Suspense>
+              )}
+              {view === "admin-content" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
+                <AdminContentView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
+                />
+                </Suspense>
+              )}
+              {view === "admin-system" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
+                <AdminSystemView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
+                />
+                </Suspense>
+              )}
+              {view === "admin-support" && (
+                <Suspense fallback={<AdminLoadingFallback />}>
+                <AdminSupportView
+                  onViewChange={(v) => setView(v)}
+                  onExitAdmin={() => setView("home")}
+                />
+                </Suspense>
               )}
               </PageTransition>
               </ErrorBoundary>
@@ -273,5 +325,33 @@ export default function Page() {
         </RecentlyViewedProvider>
       </CompareProvider>
     </FavoritesProvider>
+  );
+}
+
+/** Loading fallback for lazy-loaded admin views */
+function AdminLoadingFallback() {
+  return (
+    <div className="directory-container py-8 sm:py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 lg:gap-8">
+        <aside>
+          <div className="premium-skeleton h-8 rounded-[8px] mb-4" style={{ width: 100 }} />
+          <div className="space-y-2">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="premium-skeleton h-9 rounded-[8px]" />
+            ))}
+          </div>
+        </aside>
+        <div>
+          <div className="premium-skeleton h-10 rounded-[8px] mb-4" style={{ width: 200 }} />
+          <div className="premium-skeleton h-5 rounded-[8px] mb-6" style={{ width: 300 }} />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="premium-skeleton h-24 rounded-[12px]" />
+            ))}
+          </div>
+          <div className="premium-skeleton h-64 rounded-[12px]" />
+        </div>
+      </div>
+    </div>
   );
 }

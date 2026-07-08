@@ -11,6 +11,10 @@ import {
   ArrowLeft,
   BarChart3,
   ScrollText,
+  Users,
+  Flag,
+  Activity,
+  LifeBuoy,
 } from "lucide-react";
 import type { ViewKey } from "@/components/showcase/TopNav";
 
@@ -27,8 +31,12 @@ const ADMIN_NAV: { key: ViewKey; label: string; icon: typeof LayoutDashboard }[]
   { key: "admin-businesses", label: "Businesses", icon: Building2 },
   { key: "admin-reviews", label: "Reviews", icon: Star },
   { key: "admin-subscriptions", label: "Subscriptions", icon: CreditCard },
+  { key: "admin-users", label: "Users", icon: Users },
   { key: "admin-analytics", label: "Analytics", icon: BarChart3 },
   { key: "admin-audit-log", label: "Audit Log", icon: ScrollText },
+  { key: "admin-content", label: "Content", icon: Flag },
+  { key: "admin-system", label: "System", icon: Activity },
+  { key: "admin-support", label: "Support", icon: LifeBuoy },
   { key: "admin-settings", label: "Settings", icon: Settings },
 ];
 
