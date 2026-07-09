@@ -13,6 +13,8 @@ import { useState, useEffect } from "react";
 import { useFavorites } from "./FavoritesContext";
 import { useCompare } from "./CompareContext";
 import { CommandPaletteTrigger } from "./CommandPalette";
+import { NotificationCenter } from "./NotificationCenter";
+import { DarkModeToggle } from "./DarkModeToggle";
 
 export type ViewKey =
   | "home"
@@ -152,6 +154,12 @@ export function TopNav({
           <div className="flex items-center gap-2">
             {/* Command palette trigger */}
             {onOpenPalette && <CommandPaletteTrigger onClick={onOpenPalette} />}
+
+            {/* Notification center */}
+            <NotificationCenter />
+
+            {/* Dark mode toggle */}
+            <DarkModeToggle />
 
             {/* Favorites */}
             <button

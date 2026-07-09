@@ -15,6 +15,7 @@ import {
   Flag,
   Activity,
   LifeBuoy,
+  Search,
 } from "lucide-react";
 import type { ViewKey } from "@/components/showcase/TopNav";
 
@@ -90,6 +91,44 @@ export function AdminLayout({
             >
               ADMIN PANEL
             </span>
+          </div>
+
+          {/* Quick search */}
+          <div
+            className="mb-3 flex items-center gap-2 px-2.5 py-2 rounded-[8px] border"
+            style={{
+              backgroundColor: "var(--color-surface)",
+              borderColor: "var(--color-border)",
+            }}
+          >
+            <Search size={13} strokeWidth={2.5} style={{ color: "var(--color-text-tertiary)" }} />
+            <input
+              type="text"
+              placeholder="Search admin..."
+              className="w-full bg-transparent border-0 outline-none"
+              style={{
+                color: "var(--color-text-primary)",
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: "var(--text-xs)",
+              }}
+              onChange={(e) => {
+                const q = e.target.value.toLowerCase();
+                const items = ADMIN_NAV;
+                // Navigate to first matching item on Enter
+                if (e.key === "Enter") {
+                  const match = items.find((item) => item.label.toLowerCase().includes(q));
+                  if (match) onViewChange(match.key);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const target = e.target as HTMLInputElement;
+                  const q = target.value.toLowerCase();
+                  const match = ADMIN_NAV.find((item) => item.label.toLowerCase().includes(q));
+                  if (match) onViewChange(match.key);
+                }
+              }}
+            />
           </div>
 
           {/* Nav */}

@@ -28,6 +28,8 @@ export function CategoryListingView({
   const [sortBy, setSortBy] = useState("relevance");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 6; // 6 listings per page (2 cols × 3 rows)
 
   // Resolve category + city from props (with sensible defaults)
   const activeCategory = CATEGORIES.find((c) => c.slug === categorySlug) ?? CATEGORIES[0];
@@ -104,6 +106,14 @@ export function CategoryListingView({
         return 0;
     }
   });
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  // Reset page if it exceeds totalPages (derived state — no effect needed)
+  const effectivePage = Math.min(currentPage, totalPages);
+  const safePage = effectivePage;
+  const paginatedFiltered = filtered.slice((safePage - 1) * perPage, safePage * perPage);
+  const setPage = (p: number) => setCurrentPage(Math.max(1, Math.min(totalPages, p)));
 
   const activeFilterCount =
     (verification === "verified" ? 1 : 0) +
@@ -373,7 +383,7 @@ export function CategoryListingView({
             <MapView businesses={filtered} onOpenBusiness={onOpenBusiness} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              {filtered.map((b) => (
+              {paginatedFiltered.map((b) => (
                 <ListingCard
                   key={b.id}
                   business={b}
@@ -384,32 +394,91 @@ export function CategoryListingView({
           )}
 
           {/* Pagination */}
-          <nav
-            className="mt-8 flex items-center justify-center gap-1"
-            aria-label="Pagination"
-          >
-            {["‹", "1", "2", "3", "…", "12", "›"].map((p, i) => (
+          {filtered.length > perPage && (
+            <nav
+              className="mt-8 flex items-center justify-center gap-1"
+              aria-label="Pagination"
+            >
               <button
-                key={i}
                 type="button"
-                className="inline-flex items-center justify-center transition-all duration-150"
+                onClick={() => setPage(safePage - 1)}
+                disabled={safePage === 1}
+                aria-label="Previous page"
+                className="inline-flex items-center justify-center transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   minWidth: 36,
                   height: 36,
                   padding: "0 8px",
                   borderRadius: "var(--radius-sm)",
-                  border: p === "1" ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
-                  backgroundColor: p === "1" ? "var(--color-accent-light)" : "var(--color-surface)",
-                  color: p === "1" ? "var(--color-accent)" : "var(--color-text-secondary)",
+                  border: "1px solid var(--color-border)",
+                  backgroundColor: "var(--color-surface)",
+                  color: "var(--color-text-secondary)",
                   fontFamily: "var(--font-inter), sans-serif",
                   fontSize: "var(--text-sm)",
-                  fontWeight: p === "1" ? 600 : 500,
+                  fontWeight: 500,
                 }}
               >
-                {p}
+                ‹
               </button>
-            ))}
-          </nav>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setPage(page)}
+                  aria-label={`Page ${page}`}
+                  aria-current={page === safePage ? "page" : undefined}
+                  className="inline-flex items-center justify-center transition-all duration-150"
+                  style={{
+                    minWidth: 36,
+                    height: 36,
+                    padding: "0 8px",
+                    borderRadius: "var(--radius-sm)",
+                    border: page === safePage ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
+                    backgroundColor: page === safePage ? "var(--color-accent-light)" : "var(--color-surface)",
+                    color: page === safePage ? "var(--color-accent)" : "var(--color-text-secondary)",
+                    fontFamily: "var(--font-inter), sans-serif",
+                    fontSize: "var(--text-sm)",
+                    fontWeight: page === safePage ? 600 : 500,
+                  }}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setPage(safePage + 1)}
+                disabled={safePage === totalPages}
+                aria-label="Next page"
+                className="inline-flex items-center justify-center transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  minWidth: 36,
+                  height: 36,
+                  padding: "0 8px",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-border)",
+                  backgroundColor: "var(--color-surface)",
+                  color: "var(--color-text-secondary)",
+                  fontFamily: "var(--font-inter), sans-serif",
+                  fontSize: "var(--text-sm)",
+                  fontWeight: 500,
+                }}
+              >
+                ›
+              </button>
+            </nav>
+          )}
+          {filtered.length > 0 && (
+            <p
+              className="mt-3 text-center"
+              style={{
+                color: "var(--color-text-tertiary)",
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: "var(--text-xs)",
+              }}
+            >
+              Showing {(safePage - 1) * perPage + 1}–{Math.min(safePage * perPage, filtered.length)} of {filtered.length}
+            </p>
+          )}
         </div>
       </div>
 

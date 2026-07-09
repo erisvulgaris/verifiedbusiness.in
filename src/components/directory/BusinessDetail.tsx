@@ -12,6 +12,7 @@ import {
   Copy,
   Check,
   Printer,
+  Share2,
 } from "lucide-react";
 import { useState } from "react";
 import type { Business } from "@/lib/directory-data";
@@ -136,6 +137,7 @@ export function ContactActions({
   className?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const toast = useDirectoryToast();
 
   const handleCopy = async () => {
@@ -143,9 +145,31 @@ export function ContactActions({
       await navigator.clipboard.writeText(business.phone);
       setCopied(true);
       toast.copied(business.phone);
-      setTimeout(() => setCopied(false), 1500); // spec: 1.5s tooltip
+      setTimeout(() => setCopied(false), 1500);
     } catch {
       /* ignore */
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = typeof window !== "undefined" ? window.location.href : `https://verifiedbusiness.in/business/${business.id}`;
+    const shareData = {
+      title: business.name,
+      text: `${business.name} — ${business.category} in ${business.locality}, ${business.city}`,
+      url: shareUrl,
+    };
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        setShared(true);
+        toast.info("Link copied!", "Share this link with anyone.");
+        setTimeout(() => setShared(false), 2000);
+      }
+    } catch {
+      // User cancelled share — ignore
     }
   };
 
@@ -264,6 +288,23 @@ export function ContactActions({
         }}
       >
         <Printer size={18} strokeWidth={2} />
+      </button>
+
+      {/* Share button */}
+      <button
+        type="button"
+        onClick={handleShare}
+        aria-label="Share business"
+        title="Share"
+        className="inline-flex items-center justify-center transition-colors duration-150 hover:text-[var(--color-accent)]"
+        style={{
+          color: shared ? "var(--color-success)" : "var(--color-text-tertiary)",
+          width: 44,
+          height: 44,
+          borderRadius: "var(--radius-md)",
+        }}
+      >
+        {shared ? <Check size={18} strokeWidth={2.5} /> : <Share2 size={18} strokeWidth={2} />}
       </button>
     </div>
   );
