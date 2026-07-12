@@ -58,3 +58,12 @@ server.log
 
 # Temp files
 /.tmp/
+
+# Database (SQLite local dev)
+/db/
+
+# Upload directory
+/upload/
+
+# Z scripts
+/.zscripts/
