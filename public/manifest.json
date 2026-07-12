@@ -1,0 +1,25 @@
+{
+  "name": "VerifiedBusiness.in — Premium Business Directory",
+  "short_name": "VerifiedBusiness",
+  "description": "India's premium local business directory with verified listings across 28 states and 19,000+ pincodes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF8",
+  "theme_color": "#1B4FD8",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["business", "directory", "india"],
+  "lang": "en-IN",
+  "dir": "ltr"
+}

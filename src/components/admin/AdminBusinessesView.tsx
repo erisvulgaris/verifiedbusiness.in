@@ -216,8 +216,12 @@ export function AdminBusinessesView({
         >
           <option value="all">All plans</option>
           <option value="free">Free</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
+          <option value="starter">Starter (₹999)</option>
+          <option value="growth">Growth (₹4,999)</option>
+          <option value="premium">Premium (₹14,999)</option>
+          <option value="elite">Elite (₹29,999)</option>
+          <option value="enterprise">Enterprise (₹49,999)</option>
+          <option value="ultimate">Ultimate (₹4,99,999)</option>
         </select>
       </div>
 

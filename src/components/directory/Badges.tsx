@@ -197,11 +197,12 @@ export function PlanBadge({
   plan,
   className,
 }: {
-  plan: "monthly" | "yearly";
+  plan: "starter" | "growth" | "premium" | "elite" | "enterprise" | "ultimate";
   className?: string;
 }) {
-  const isYearly = plan === "yearly";
-  const label = isYearly ? "★ Featured" : "Premium";
+  const isPremium = plan === "premium" || plan === "elite" || plan === "enterprise" || plan === "ultimate";
+  const isUltimate = plan === "elite" || plan === "enterprise" || plan === "ultimate";
+  const label = isUltimate ? "★ Featured" : isPremium ? "Premium" : "Verified+";
   return (
     <span
       className={cn(
@@ -209,8 +210,8 @@ export function PlanBadge({
         className,
       )}
       style={{
-        backgroundColor: isYearly ? "var(--color-accent)" : "var(--color-accent-light)",
-        color: isYearly ? "#FFFFFF" : "var(--color-accent)",
+        backgroundColor: isUltimate ? "var(--color-accent)" : "var(--color-accent-light)",
+        color: isUltimate ? "#FFFFFF" : "var(--color-accent)",
         fontSize: "var(--text-xs)",
         fontFamily: "var(--font-inter), sans-serif",
         fontWeight: 600,

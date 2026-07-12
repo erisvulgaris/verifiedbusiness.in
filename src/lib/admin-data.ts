@@ -41,8 +41,13 @@ export interface RevenueMetrics {
   yearlyRevenue: number;
   planBreakdown: {
     free: { count: number; revenue: number };
-    monthly: { count: number; revenue: number };
-    yearly: { count: number; revenue: number };
+    starter: { count: number; revenue: number };
+    growth: { count: number; revenue: number };
+    premium: { count: number; revenue: number };
+    elite: { count: number; revenue: number };
+    enterprise: { count: number; revenue: number };
+    ultimate: { count: number; revenue: number };
+    [key: string]: { count: number; revenue: number };
   };
   churnRate: number; // percentage
   expiringIn7Days: number;
@@ -74,12 +79,13 @@ export function getAdminStats(): AdminStats {
   const activeSubs = BUSINESSES.filter(
     (b) => b.subscription.status === "active" && b.subscription.plan !== "free",
   );
-  const monthly = activeSubs.filter((s) => s.subscription.plan === "monthly");
-  const yearly = activeSubs.filter((s) => s.subscription.plan === "yearly");
 
-  const monthlyRevenue = monthly.length * SUBSCRIPTION_PLANS.monthly.price;
-  const yearlyRevenue = yearly.length * SUBSCRIPTION_PLANS.yearly.price;
-  const mrr = monthlyRevenue + yearlyRevenue / 12;
+  // Calculate revenue across all paid plans
+  const totalRevenue = activeSubs.reduce((sum, b) => {
+    const plan = SUBSCRIPTION_PLANS[b.subscription.plan as keyof typeof SUBSCRIPTION_PLANS];
+    return sum + (plan?.price ?? 0);
+  }, 0);
+  const mrr = totalRevenue / 12; // All plans are annual, so MRR = annual/12
   const arr = mrr * 12;
 
   return {
@@ -88,14 +94,14 @@ export function getAdminStats(): AdminStats {
     unverifiedBusinesses: unverified.length,
     pendingApprovals: unverified.length,
     activeSubscriptions: activeSubs.length,
-    monthlySubscriptions: monthly.length,
-    yearlySubscriptions: yearly.length,
+    monthlySubscriptions: activeSubs.filter((s) => s.subscription.plan === "starter" || s.subscription.plan === "growth").length,
+    yearlySubscriptions: activeSubs.filter((s) => ["premium", "elite", "enterprise", "ultimate"].includes(s.subscription.plan)).length,
     freeListings: BUSINESSES.filter((b) => b.subscription.plan === "free").length,
     flaggedReviews: flagged.length,
     totalReviews: allReviews.length,
     mrr: Math.round(mrr),
     arr: Math.round(arr),
-    totalRevenue: monthlyRevenue + yearlyRevenue,
+    totalRevenue: totalRevenue,
   };
 }
 
@@ -105,8 +111,8 @@ export function getRevenueMetrics(): RevenueMetrics {
   const activeSubs = BUSINESSES.filter(
     (b) => b.subscription.status === "active" && b.subscription.plan !== "free",
   );
-  const monthly = activeSubs.filter((s) => s.subscription.plan === "monthly");
-  const yearly = activeSubs.filter((s) => s.subscription.plan === "yearly");
+  const monthly = activeSubs.filter((s) => s.subscription.plan === "growth");
+  const yearly = activeSubs.filter((s) => s.subscription.plan === "ultimate");
   const free = BUSINESSES.filter((b) => b.subscription.plan === "free");
 
   const monthlyRevenue = monthly.length * SUBSCRIPTION_PLANS.monthly.price;
@@ -138,13 +144,17 @@ export function getRevenueMetrics(): RevenueMetrics {
   return {
     mrr: Math.round(monthlyRevenue + yearlyRevenue / 12),
     arr: Math.round((monthlyRevenue + yearlyRevenue / 12) * 12),
-    totalRevenue: monthlyRevenue + yearlyRevenue,
-    monthlyRevenue,
-    yearlyRevenue,
+    totalRevenue: totalRevenue,
+    totalRevenue,
+    totalRevenue,
     planBreakdown: {
       free: { count: free.length, revenue: 0 },
-      monthly: { count: monthly.length, revenue: monthlyRevenue },
-      yearly: { count: yearly.length, revenue: yearlyRevenue },
+      starter: { count: activeSubs.filter((s) => s.subscription.plan === "starter").length, revenue: activeSubs.filter((s) => s.subscription.plan === "starter").length * 999 },
+      growth: { count: activeSubs.filter((s) => s.subscription.plan === "growth").length, revenue: activeSubs.filter((s) => s.subscription.plan === "growth").length * 4999 },
+      premium: { count: activeSubs.filter((s) => s.subscription.plan === "premium").length, revenue: activeSubs.filter((s) => s.subscription.plan === "premium").length * 14999 },
+      elite: { count: activeSubs.filter((s) => s.subscription.plan === "elite").length, revenue: activeSubs.filter((s) => s.subscription.plan === "elite").length * 29999 },
+      enterprise: { count: activeSubs.filter((s) => s.subscription.plan === "enterprise").length, revenue: activeSubs.filter((s) => s.subscription.plan === "enterprise").length * 49999 },
+      ultimate: { count: activeSubs.filter((s) => s.subscription.plan === "ultimate").length, revenue: activeSubs.filter((s) => s.subscription.plan === "ultimate").length * 499999 },
     },
     churnRate: Math.round(churnRate * 10) / 10,
     expiringIn7Days: expiring7,

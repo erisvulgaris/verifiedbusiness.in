@@ -51,7 +51,7 @@ export interface DayHours {
 }
 
 /* ---------------- SUBSCRIPTION (paid listing model) ---------------- */
-export type SubscriptionPlan = "free" | "monthly" | "yearly";
+export type SubscriptionPlan = "free" | "starter" | "growth" | "premium" | "elite" | "enterprise" | "ultimate";
 export type SubscriptionStatus = "active" | "expired" | "pending" | "cancelled";
 
 export interface Subscription {
@@ -70,37 +70,101 @@ export const SUBSCRIPTION_PLANS = {
     label: "Free",
     price: 0,
     durationDays: 0,
+    adCredit: 0,
     features: [
       "Basic listing",
       "No verification badge",
       "Standard placement",
       "Limited to 3 photos",
+      "No ad campaigns",
     ],
   },
-  monthly: {
-    id: "monthly" as const,
-    label: "Monthly",
+  starter: {
+    id: "starter" as const,
+    label: "Starter",
     price: 999,
-    durationDays: 30,
+    durationDays: 365,
+    adCredit: 0,
     features: [
       "Verified badge",
-      "Priority placement in search",
-      "Analytics dashboard",
-      "Unlimited photos",
-      "Respond to reviews",
+      "10 photos",
+      "Basic analytics (views, calls)",
+      "Standard placement",
+      "Self-serve ad management",
     ],
   },
-  yearly: {
-    id: "yearly" as const,
-    label: "Yearly",
-    price: 9999,
+  growth: {
+    id: "growth" as const,
+    label: "Growth",
+    price: 4999,
     durationDays: 365,
+    adCredit: 500,
     features: [
-      "Everything in Monthly",
-      "2 months free (₹11,988 → ₹9,999)",
-      "Premium support",
-      "Featured badge on listing",
-      "API access for data sync",
+      "Everything in Starter",
+      "Priority placement in search",
+      "Respond to reviews",
+      "50 photos",
+      "₹500 ad credit included",
+      "Lead generation (Get Quote)",
+    ],
+  },
+  premium: {
+    id: "premium" as const,
+    label: "Premium",
+    price: 14999,
+    durationDays: 365,
+    adCredit: 1000,
+    features: [
+      "Everything in Growth",
+      "★ Featured badge",
+      "Advanced analytics",
+      "API access",
+      "₹1,000 ad credit included",
+      "Unlimited photos",
+    ],
+  },
+  elite: {
+    id: "elite" as const,
+    label: "Elite",
+    price: 29999,
+    durationDays: 365,
+    adCredit: 2000,
+    features: [
+      "Everything in Premium",
+      "5 locations",
+      "Dedicated support",
+      "₹2,000 ad credit included",
+      "Ad campaign management by us",
+    ],
+  },
+  enterprise: {
+    id: "enterprise" as const,
+    label: "Enterprise",
+    price: 49999,
+    durationDays: 365,
+    adCredit: 5000,
+    features: [
+      "Everything in Elite",
+      "Unlimited locations",
+      "White-label option",
+      "₹5,000 ad credit included",
+      "Custom integrations",
+      "Priority ad approval",
+    ],
+  },
+  ultimate: {
+    id: "ultimate" as const,
+    label: "Ultimate",
+    price: 499999,
+    durationDays: 365,
+    adCredit: 50000,
+    features: [
+      "Everything in Enterprise",
+      "₹50,000 ad credit included",
+      "Dedicated account manager",
+      "Custom SLA",
+      "Premium ad placements",
+      "Co-branded campaigns",
     ],
   },
 } as const;
@@ -1508,10 +1572,11 @@ export const BUSINESSES: Business[] = [
 ];
 
 /* ---------------- Assign subscriptions to each business ---------------- */
-// Verified businesses get paid plans (monthly or yearly).
+// Verified businesses get paid plans distributed across tiers.
 // Unverified businesses get free plan.
 // Deterministic based on business ID hash so data is stable across renders.
 function assignSubscriptions() {
+  const planKeys: SubscriptionPlan[] = ["starter", "growth", "premium", "elite", "enterprise", "ultimate"];
   for (const b of BUSINESSES) {
     if (!b.verified) {
       b.subscription = {
@@ -1524,11 +1589,12 @@ function assignSubscriptions() {
       };
       continue;
     }
-    // Verified → paid. Alternate monthly/yearly deterministically.
+    // Verified → distribute across paid plans deterministically
     const idHash = b.id.charCodeAt(b.id.length - 1) ?? 0;
-    const plan = idHash % 3 === 0 ? "yearly" : "monthly";
-    const price = plan === "yearly" ? 9999 : 999;
-    const days = plan === "yearly" ? 365 : 30;
+    const planIdx = idHash % planKeys.length;
+    const plan = planKeys[planIdx];
+    const planConfig = SUBSCRIPTION_PLANS[plan];
+    const days = planConfig.durationDays;
 
     // Some subscriptions are expired (status variety for admin testing)
     const statusRoll = idHash % 7;
@@ -1543,7 +1609,7 @@ function assignSubscriptions() {
       status,
       startDate: startDate.toISOString().slice(0, 10),
       endDate: endDate.toISOString().slice(0, 10),
-      amount: price,
+      amount: planConfig.price,
       autoRenew: status === "active" ? idHash % 2 === 0 : false,
     };
   }

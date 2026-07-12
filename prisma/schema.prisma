@@ -1,14 +1,5 @@
-// Prisma schema for Bharat Directory.
-//
-// The application currently uses mock data (src/lib/directory-data.ts) for the
-// design-system showcase. These models define the target database schema for
-// when the app is wired to a real database. They mirror the TypeScript
-// interfaces in directory-data.ts so the migration path is straightforward.
-//
-// To enable database-backed listings:
-//  1. Run `bun run db:push` to create the tables.
-//  2. Replace the mock data imports in the views with Prisma queries.
-//  3. The component contracts (Business, Category, etc.) stay the same.
+// Prisma schema for VerifiedBusiness.in — production schema
+// Covers: businesses, categories, reviews, subscriptions, users, ads, leads, tickets, notifications, invoices
 
 generator client {
   provider = "prisma-client-js"
@@ -20,21 +11,17 @@ datasource db {
 }
 
 // ---------- Geographic hierarchy ----------
-// Per the platform spec: Country > State > District > City > Locality > Pincode
-// Every level is a first-class SEO asset and gets its own page type.
 
 model State {
   id           String   @id @default(cuid())
-  code         String   @unique // "KA", "MH", "DL"
-  name         String   @unique // "Karnataka"
+  code         String   @unique
+  name         String   @unique
   capital      String
   cityCount    Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
   cities       City[]
   businesses   Business[]
-
   @@index([code])
 }
 
@@ -45,10 +32,8 @@ model City {
   state     State    @relation(fields: [stateId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   businesses Business[]
   localities Locality[]
-
   @@unique([name, stateId])
   @@index([stateId])
 }
@@ -61,9 +46,7 @@ model Locality {
   pincode   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   businesses Business[]
-
   @@unique([name, cityId])
   @@index([cityId])
   @@index([pincode])
@@ -76,12 +59,11 @@ model Category {
   name          String   @unique
   slug          String   @unique
   description   String
+  icon          String   @default("Building2")
   listingCount  Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-
   businesses Business[]
-
   @@index([slug])
 }
 
@@ -97,10 +79,10 @@ model Business {
   address         String
   localityId      String?
   locality        Locality? @relation(fields: [localityId], references: [id])
-  cityId          String
-  city            City     @relation(fields: [cityId], references: [id])
-  stateCode       String
-  state           State    @relation(fields: [stateCode], references: [code])
+  cityId          String?
+  city            City?     @relation(fields: [cityId], references: [id])
+  stateCode       String?
+  state           State?    @relation(fields: [stateCode], references: [code])
   pincode         String
   phone           String
   website         String?
@@ -108,27 +90,36 @@ model Business {
   hours           String
   openNow         Boolean  @default(false)
   verified        Boolean  @default(false)
-  paymentMethods  String   // JSON-encoded array
-  description     String
-  highlights      String   // JSON-encoded array
+  paymentMethods  String   @default("[]")
+  description     String   @default("")
+  highlights      String   @default("[]")
   yearsActive     Int      @default(0)
-  priceRange      String?  // "$", "$$", "$$$", "$$$$"
+  priceRange      String?
   photoCount      Int      @default(0)
-  tags            String?  // JSON-encoded array
+  tags            String   @default("[]")
+  logo            String?
 
-  // Subscription (paid listing model)
-  subscriptionPlan     String   @default("free")  // "free" | "monthly" | "yearly"
-  subscriptionStatus   String   @default("active") // "active" | "expired" | "pending" | "cancelled"
-  subscriptionStart    DateTime?
-  subscriptionEnd      DateTime?
-  subscriptionAmount   Int      @default(0) // in INR (paise not needed for mock)
-  subscriptionAutoRenew Boolean @default(false)
+  // Subscription
+  subscriptionPlan      String   @default("free")
+  subscriptionStatus    String   @default("active")
+  subscriptionStart     DateTime?
+  subscriptionEnd       DateTime?
+  subscriptionAmount    Int      @default(0)
+  subscriptionAutoRenew Boolean  @default(false)
+  adCredit              Int      @default(0)
+
+  // Claim
+  claimedBy    String?
+  claimStatus  String   @default("unclaimed")
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   reviews    Review[]
   weeklyHours DayHours[]
+  leads      Lead[]
+  adCampaigns AdCampaign[]
+  invoices   Invoice[]
 
   @@index([categorySlug])
   @@index([cityId])
@@ -138,19 +129,17 @@ model Business {
   @@index([rating])
   @@index([subscriptionPlan])
   @@index([subscriptionStatus])
+  @@index([claimStatus])
 }
 
 model DayHours {
   id         String   @id @default(cuid())
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  day        String   // "Mon", "Tue", etc.
+  day        String
   open       String
   close      String
   closed     Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
   @@unique([businessId, day])
   @@index([businessId])
 }
@@ -163,31 +152,48 @@ model Review {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   author     String
   initials   String
-  rating     Int // 1-5
+  rating     Int
   date       String
   text       String
   helpful    Int      @default(0)
+  status     String   @default("approved")
+  flagReason String?
+  response   String?
+  respondedAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
   @@index([businessId])
   @@index([rating])
+  @@index([status])
 }
 
-// ---------- User accounts (for future auth) ----------
-// Retained from scaffold for NextAuth.js integration.
+// ---------- Users & Auth ----------
 
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
+  phone     String?
+  role      String   @default("viewer")
+  status    String   @default("active")
+  passwordHash String?
+  image     String?
+  emailVerified DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  accounts  Account[]
+  sessions  Session[]
+  ownedBusinesses String?
+  tickets   SupportTicket[]
+  notifications Notification[]
+  @@index([email])
+  @@index([role])
 }
 
 model Account {
   id                String  @id @default(cuid())
   userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   type              String
   provider          String
   providerAccountId String
@@ -200,7 +206,6 @@ model Account {
   session_state     String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-
   @@unique([provider, providerAccountId])
   @@index([userId])
 }
@@ -209,9 +214,121 @@ model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
   userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expires      DateTime
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
   @@index([userId])
+}
+
+// ---------- Ad Campaigns ----------
+
+model AdCampaign {
+  id           String   @id @default(cuid())
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  platform     String   @default("meta")
+  status       String   @default("draft")
+  headline     String
+  description  String
+  imageUrl     String?
+  targetCity   String?
+  targetRadius Int      @default(10)
+  budget       Int      @default(0)
+  spent        Int      @default(0)
+  impressions  Int      @default(0)
+  clicks       Int      @default(0)
+  leads        Int      @default(0)
+  startDate    DateTime?
+  endDate      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([businessId])
+  @@index([status])
+}
+
+// ---------- Leads ----------
+
+model Lead {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  phone       String
+  email       String?
+  message     String
+  status      String   @default("new")
+  source      String   @default("website")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([businessId])
+  @@index([status])
+}
+
+// ---------- Support Tickets ----------
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  businessId  String?
+  subject     String
+  fromEmail   String
+  fromName    String
+  category    String   @default("general")
+  priority    String   @default("medium")
+  status      String   @default("open")
+  message     String
+  response    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([status])
+  @@index([priority])
+  @@index([userId])
+}
+
+// ---------- Notifications ----------
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  type        String   @default("info")
+  title       String
+  description String
+  read        Boolean  @default(false)
+  actionUrl   String?
+  createdAt   DateTime @default(now())
+  @@index([userId])
+  @@index([read])
+}
+
+// ---------- Invoices ----------
+
+model Invoice {
+  id           String   @id @default(cuid())
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id])
+  invoiceNumber String  @unique
+  amount       Int
+  plan         String
+  period       String
+  status       String   @default("paid")
+  gstin        String?
+  pdfUrl       String?
+  createdAt    DateTime @default(now())
+  @@index([businessId])
+  @@index([status])
+}
+
+// ---------- Feature Flags ----------
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  label       String
+  description String
+  enabled     Boolean  @default(false)
+  category    String   @default("ui")
+  updatedAt   DateTime @updatedAt
 }

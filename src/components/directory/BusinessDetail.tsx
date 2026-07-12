@@ -63,11 +63,8 @@ export function BusinessDetailHeader({
             <CategoryChip label={business.category} variant="compact" />
             {business.verified && <VerifiedBadge />}
             <OpenBadge open={isBusinessOpen(business.weeklyHours)} />
-            {business.subscription?.plan === "yearly" && business.subscription.status === "active" && (
-              <PlanBadge plan="yearly" />
-            )}
-            {business.subscription?.plan === "monthly" && business.subscription.status === "active" && (
-              <PlanBadge plan="monthly" />
+            {business.subscription?.plan !== "free" && business.subscription?.status === "active" && (
+              <PlanBadge plan={business.subscription.plan as "starter" | "growth" | "premium" | "elite" | "enterprise" | "ultimate"} />
             )}
           </div>
 

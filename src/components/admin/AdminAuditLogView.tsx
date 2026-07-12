@@ -39,7 +39,7 @@ function seedAuditEventsOnce() {
   }
   const events = [
     { action: "business.approved", actor: "admin@verifiedbusiness.in", target: "b1", details: { name: "Sankalp" } },
-    { action: "subscription.upgraded", actor: "system", target: "b1", details: { from: "monthly", to: "yearly" } },
+    { action: "subscription.upgraded", actor: "system", target: "b1", details: { from: "growth", to: "ultimate" } },
     { action: "review.flagged", actor: "moderation", target: "r3", details: { reason: "Reported as spam" } },
     { action: "business.submitted", actor: "user@example.com", target: "b25", details: { name: "New Restaurant" } },
     { action: "config.updated", actor: "admin@verifiedbusiness.in", details: { key: "monthly_price", value: 999 } },

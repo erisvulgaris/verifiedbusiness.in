@@ -33,7 +33,7 @@ export function AdminSubscriptionsView({
   const metrics = getRevenueMetrics();
   const trend = getRevenueTrend();
   const [filterStatus, setFilterStatus] = useState<"all" | SubscriptionStatus>("all");
-  const [filterPlan, setFilterPlan] = useState<"all" | "free" | "monthly" | "yearly">("all");
+  const [filterPlan, setFilterPlan] = useState<"all" | "free" | "growth" | "ultimate">("all");
   const [search, setSearch] = useState("");
 
   const subscribed = BUSINESSES.filter((b) => b.subscription.plan !== "free");
@@ -99,22 +99,19 @@ export function AdminSubscriptionsView({
       </div>
 
       {/* Plan breakdown */}
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <PlanCard
-          planKey="free"
-          count={metrics.planBreakdown.free.count}
-          revenue={metrics.planBreakdown.free.revenue}
-        />
-        <PlanCard
-          planKey="monthly"
-          count={metrics.planBreakdown.monthly.count}
-          revenue={metrics.planBreakdown.monthly.revenue}
-        />
-        <PlanCard
-          planKey="yearly"
-          count={metrics.planBreakdown.yearly.count}
-          revenue={metrics.planBreakdown.yearly.revenue}
-        />
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {(["free", "starter", "growth", "premium", "elite", "enterprise", "ultimate"] as const).map((pk) => {
+          const planCount = BUSINESSES.filter((b) => b.subscription.plan === pk && b.subscription.status === "active").length;
+          const planRevenue = planCount * (SUBSCRIPTION_PLANS[pk]?.price ?? 0);
+          return (
+            <PlanCard
+              key={pk}
+              planKey={pk}
+              count={planCount}
+              revenue={planRevenue}
+            />
+          );
+        })}
       </div>
 
       {/* Revenue chart */}
@@ -293,8 +290,12 @@ export function AdminSubscriptionsView({
             }}
           >
             <option value="all">All plans</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
+            <option value="starter">Starter (₹999)</option>
+            <option value="growth">Growth (₹4,999)</option>
+            <option value="premium">Premium (₹14,999)</option>
+            <option value="elite">Elite (₹29,999)</option>
+            <option value="enterprise">Enterprise (₹49,999)</option>
+            <option value="ultimate">Ultimate (₹4,99,999)</option>
           </select>
           <select
             value={filterStatus}
@@ -465,7 +466,7 @@ function PlanCard({
   count,
   revenue,
 }: {
-  planKey: "free" | "monthly" | "yearly";
+  planKey: "free" | "starter" | "growth" | "premium" | "elite" | "enterprise" | "ultimate";
   count: number;
   revenue: number;
 }) {

@@ -29,6 +29,7 @@ export const metadata: Metadata = {
     "Bharat directory",
   ],
   authors: [{ name: "VerifiedBusiness.in" }],
+  manifest: "/manifest.json",
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
