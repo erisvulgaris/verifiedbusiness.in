@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -16,6 +17,8 @@ import {
   Activity,
   LifeBuoy,
   Search,
+  Menu,
+  X,
 } from "lucide-react";
 import type { ViewKey } from "@/components/showcase/TopNav";
 
@@ -58,117 +61,188 @@ export function AdminLayout({
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const sidebarContent = (
+    <>
+      {/* Back to site */}
+      <button
+        type="button"
+        onClick={onExitAdmin}
+        className="mb-4 inline-flex items-center gap-1.5 font-medium transition-colors hover:text-[var(--color-accent)]"
+        style={{
+          color: "var(--color-text-secondary)",
+          fontFamily: "var(--font-inter), sans-serif",
+          fontSize: "var(--text-sm)",
+        }}
+      >
+        <ArrowLeft size={14} strokeWidth={2.5} />
+        Back to site
+      </button>
+
+      {/* Admin label */}
+      <div className="mb-3">
+        <span
+          className="inline-flex items-center gap-1.5 font-display font-bold px-2.5 py-1 rounded-full"
+          style={{
+            backgroundColor: "var(--color-accent-light)",
+            color: "var(--color-accent)",
+            fontSize: "var(--text-xs)",
+            letterSpacing: "0.5px",
+          }}
+        >
+          ADMIN PANEL
+        </span>
+      </div>
+
+      {/* Quick search */}
+      <div
+        className="mb-3 flex items-center gap-2 px-2.5 py-2 rounded-[8px] border"
+        style={{
+          backgroundColor: "var(--color-surface)",
+          borderColor: "var(--color-border)",
+        }}
+      >
+        <Search size={13} strokeWidth={2.5} style={{ color: "var(--color-text-tertiary)" }} />
+        <input
+          type="text"
+          placeholder="Search admin..."
+          className="w-full bg-transparent border-0 outline-none"
+          style={{
+            color: "var(--color-text-primary)",
+            fontFamily: "var(--font-inter), sans-serif",
+            fontSize: "var(--text-xs)",
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              const target = e.target as HTMLInputElement;
+              const q = target.value.toLowerCase();
+              const match = ADMIN_NAV.find((item) => item.label.toLowerCase().includes(q));
+              if (match) {
+                onViewChange(match.key);
+                setSidebarOpen(false);
+              }
+            }
+          }}
+        />
+      </div>
+
+      {/* Nav */}
+      <nav aria-label="Admin sections">
+        <ul className="space-y-1">
+          {ADMIN_NAV.map((item) => {
+            const isActive = activeView === item.key;
+            const Icon = item.icon;
+            return (
+              <li key={item.key}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onViewChange(item.key);
+                    setSidebarOpen(false);
+                  }}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] transition-all duration-150 text-left",
+                    isActive
+                      ? "bg-[var(--color-accent)] text-[var(--color-text-inverse)]"
+                      : "hover:bg-[var(--color-surface-2)] text-[var(--color-text-secondary)]",
+                  )}
+                  style={{
+                    fontFamily: "var(--font-inter), sans-serif",
+                    fontSize: "var(--text-sm)",
+                    fontWeight: isActive ? 600 : 500,
+                    minHeight: 44,
+                  }}
+                >
+                  <Icon size={16} strokeWidth={2.2} />
+                  {item.label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </>
+  );
+
   return (
-    <div className="directory-container py-6 sm:py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 lg:gap-8">
-        {/* Sidebar */}
-        <aside>
-          {/* Back to site */}
-          <button
-            type="button"
-            onClick={onExitAdmin}
-            className="mb-4 inline-flex items-center gap-1.5 font-medium transition-colors hover:text-[var(--color-accent)]"
-            style={{
-              color: "var(--color-text-secondary)",
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: "var(--text-sm)",
-            }}
-          >
-            <ArrowLeft size={14} strokeWidth={2.5} />
-            Back to site
-          </button>
+    <div className="directory-container py-4 sm:py-6 lg:py-8">
+      {/* Mobile sidebar toggle bar */}
+      <div className="lg:hidden mb-4 flex items-center justify-between gap-3 p-3 border rounded-[10px] bg-[var(--color-surface)]" style={{ borderColor: "var(--color-border)" }}>
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open admin menu"
+          className="inline-flex items-center gap-2 font-medium"
+          style={{
+            color: "var(--color-text-primary)",
+            fontFamily: "var(--font-inter), sans-serif",
+            fontSize: "var(--text-sm)",
+          }}
+        >
+          <Menu size={18} strokeWidth={2.5} style={{ color: "var(--color-accent)" }} />
+          Menu
+        </button>
+        <span
+          className="font-display font-bold"
+          style={{
+            color: "var(--color-text-primary)",
+            fontSize: "var(--text-sm)",
+          }}
+        >
+          {title}
+        </span>
+      </div>
 
-          {/* Admin label */}
-          <div className="mb-3">
-            <span
-              className="inline-flex items-center gap-1.5 font-display font-bold px-2.5 py-1 rounded-full"
+      {/* Mobile sidebar drawer */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="lg:hidden fixed inset-0 z-[100]"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className="absolute inset-0" style={{ backgroundColor: "rgba(26, 25, 23, 0.5)", backdropFilter: "blur(4px)" }} />
+            <motion.div
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="relative h-full w-[280px] max-w-[85vw] overflow-y-auto p-4"
               style={{
-                backgroundColor: "var(--color-accent-light)",
-                color: "var(--color-accent)",
-                fontSize: "var(--text-xs)",
-                letterSpacing: "0.5px",
+                backgroundColor: "var(--color-surface)",
+                borderRight: "1px solid var(--color-border)",
               }}
+              onClick={(e) => e.stopPropagation()}
             >
-              ADMIN PANEL
-            </span>
-          </div>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close menu"
+                className="absolute top-4 right-4 inline-flex items-center justify-center"
+                style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", color: "var(--color-text-secondary)" }}
+              >
+                <X size={18} strokeWidth={2.5} />
+              </button>
+              {sidebarContent}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* Quick search */}
-          <div
-            className="mb-3 flex items-center gap-2 px-2.5 py-2 rounded-[8px] border"
-            style={{
-              backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-border)",
-            }}
-          >
-            <Search size={13} strokeWidth={2.5} style={{ color: "var(--color-text-tertiary)" }} />
-            <input
-              type="text"
-              placeholder="Search admin..."
-              className="w-full bg-transparent border-0 outline-none"
-              style={{
-                color: "var(--color-text-primary)",
-                fontFamily: "var(--font-inter), sans-serif",
-                fontSize: "var(--text-xs)",
-              }}
-              onChange={(e) => {
-                const q = e.target.value.toLowerCase();
-                const items = ADMIN_NAV;
-                // Navigate to first matching item on Enter
-                if (e.key === "Enter") {
-                  const match = items.find((item) => item.label.toLowerCase().includes(q));
-                  if (match) onViewChange(match.key);
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  const target = e.target as HTMLInputElement;
-                  const q = target.value.toLowerCase();
-                  const match = ADMIN_NAV.find((item) => item.label.toLowerCase().includes(q));
-                  if (match) onViewChange(match.key);
-                }
-              }}
-            />
-          </div>
-
-          {/* Nav */}
-          <nav aria-label="Admin sections">
-            <ul className="space-y-1">
-              {ADMIN_NAV.map((item) => {
-                const isActive = activeView === item.key;
-                const Icon = item.icon;
-                return (
-                  <li key={item.key}>
-                    <button
-                      type="button"
-                      onClick={() => onViewChange(item.key)}
-                      aria-current={isActive ? "page" : undefined}
-                      className={cn(
-                        "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] transition-all duration-150 text-left",
-                        isActive
-                          ? "bg-[var(--color-accent)] text-[var(--color-text-inverse)]"
-                          : "hover:bg-[var(--color-surface-2)] text-[var(--color-text-secondary)]",
-                      )}
-                      style={{
-                        fontFamily: "var(--font-inter), sans-serif",
-                        fontSize: "var(--text-sm)",
-                        fontWeight: isActive ? 600 : 500,
-                      }}
-                    >
-                      <Icon size={16} strokeWidth={2.2} />
-                      {item.label}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 lg:gap-8">
+        {/* Desktop sidebar */}
+        <aside className="hidden lg:block">
+          {sidebarContent}
         </aside>
 
         {/* Main content */}
         <div className="min-w-0">
           {/* Header */}
-          <header className="mb-6 flex items-start justify-between gap-4">
+          <header className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
             <div>
               <h1
                 className="font-display font-bold"

@@ -289,6 +289,53 @@
 }
 
 /* ========================================================================
+   MOBILE-FIRST GLOBAL RULES
+   Touch targets ≥44px, prevent text size adjust, smooth scrolling
+   ======================================================================== */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Prevent iOS rubber-band scroll on body */
+    overscroll-behavior-y: none;
+  }
+
+  /* Ensure all interactive elements have minimum 44px touch target */
+  button,
+  a[role="button"],
+  input[type="submit"],
+  input[type="button"],
+  summary {
+    min-height: 36px;
+  }
+
+  /* Small icon-only buttons get 44px via flex centering */
+  button[aria-label]:not(:has(span:not(.sr-only))) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Smooth scrolling for anchor links */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Safe area insets for notched devices */
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+}
+
+/* ========================================================================
    SCROLLBAR (subtle, warm)
    ======================================================================== */
 @layer base {
@@ -500,6 +547,108 @@
   .float-animation { animation: none; }
   .gradient-text { animation: none; }
   .premium-skeleton { animation: none; }
+}
+
+/* ========================================================================
+   MOBILE-FIRST RESPONSIVE OVERRIDES
+   Every screen is designed for 390px first, then enhanced for larger.
+   ======================================================================== */
+
+/* ---- Mobile container ---- */
+@media (max-width: 640px) {
+  .directory-container {
+    padding-inline: 16px;
+  }
+
+  /* Hero heading: clamp already handles this but ensure max on mobile */
+  h1 {
+    font-size: clamp(var(--text-xl), 8vw, var(--text-3xl)) !important;
+    line-height: 1.1 !important;
+  }
+
+  h2 {
+    font-size: clamp(var(--text-lg), 6vw, var(--text-2xl)) !important;
+  }
+
+  /* Cards: full width, tighter padding on mobile */
+  article[class*="rounded"] {
+    padding: 16px !important;
+  }
+
+  /* Tables: horizontal scroll wrapper */
+  table {
+    font-size: 13px;
+  }
+  th, td {
+    padding: 8px 12px !important;
+    white-space: nowrap;
+  }
+
+  /* Modals: near full-width on mobile */
+  [class*="fixed inset-0"] > [class*="rounded"] {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 85vh !important;
+  }
+
+  /* Admin sidebar: hidden on mobile, shown as drawer */
+  .admin-sidebar-mobile-hidden {
+    display: none !important;
+  }
+
+  /* Admin KPI grid: 2 cols on mobile (already handled by Tailwind) */
+  /* Admin table: wrap in horizontal scroll */
+  .admin-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Stagger items: faster on mobile (less wait) */
+  .stagger-mobile-fast > * {
+    animation-delay: calc(var(--stagger-index, 0) * 0.02s) !important;
+  }
+
+  /* Search bar: stack vertically on very small screens */
+  .search-bar-mobile-stack {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .search-bar-mobile-stack > * {
+    width: 100% !important;
+  }
+
+  /* Hide desktop-only elements */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Show mobile-only elements */
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* Sticky CTA bar shadow */
+  .sticky-cta-bar {
+    position: sticky;
+    bottom: 56px; /* Above mobile tab bar */
+    z-index: 30;
+  }
+}
+
+/* ---- Tablet (641px - 1024px) ---- */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* ---- Desktop (1025px+) ---- */
+@media (min-width: 1025px) {
+  .mobile-only {
+    display: none !important;
+  }
 }
 
 /* ========================================================================

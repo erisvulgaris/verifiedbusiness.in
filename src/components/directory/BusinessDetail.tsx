@@ -13,6 +13,7 @@ import {
   Check,
   Printer,
   Share2,
+  MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
 import type { Business } from "@/lib/directory-data";
@@ -302,6 +303,25 @@ export function ContactActions({
         }}
       >
         {shared ? <Check size={18} strokeWidth={2.5} /> : <Share2 size={18} strokeWidth={2} />}
+      </button>
+
+      {/* Get Quote / Lead generation button */}
+      <button
+        type="button"
+        onClick={() => {
+          toast.info("Get Quote", "This feature will let customers send enquiries directly to the business.");
+        }}
+        aria-label="Get quote from this business"
+        title="Get Quote"
+        className="inline-flex items-center justify-center transition-colors duration-150 hover:text-[var(--color-accent)]"
+        style={{
+          color: "var(--color-text-tertiary)",
+          width: 44,
+          height: 44,
+          borderRadius: "var(--radius-md)",
+        }}
+      >
+        <MessageSquare size={18} strokeWidth={2} />
       </button>
     </div>
   );
