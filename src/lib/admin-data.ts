@@ -111,12 +111,15 @@ export function getRevenueMetrics(): RevenueMetrics {
   const activeSubs = BUSINESSES.filter(
     (b) => b.subscription.status === "active" && b.subscription.plan !== "free",
   );
-  const monthly = activeSubs.filter((s) => s.subscription.plan === "growth");
-  const yearly = activeSubs.filter((s) => s.subscription.plan === "ultimate");
   const free = BUSINESSES.filter((b) => b.subscription.plan === "free");
 
-  const monthlyRevenue = monthly.length * SUBSCRIPTION_PLANS.monthly.price;
-  const yearlyRevenue = yearly.length * SUBSCRIPTION_PLANS.yearly.price;
+  // Calculate total revenue across all paid plans
+  const totalRevenue = activeSubs.reduce((sum, b) => {
+    const plan = SUBSCRIPTION_PLANS[b.subscription.plan as keyof typeof SUBSCRIPTION_PLANS];
+    return sum + (plan?.price ?? 0);
+  }, 0);
+  const mrr = totalRevenue / 12;
+  const arr = mrr * 12;
 
   // Churn: expired + cancelled / total ever subscribed
   const allPaid = BUSINESSES.filter((b) => b.subscription.plan !== "free");
@@ -142,11 +145,11 @@ export function getRevenueMetrics(): RevenueMetrics {
   }).length;
 
   return {
-    mrr: Math.round(monthlyRevenue + yearlyRevenue / 12),
-    arr: Math.round((monthlyRevenue + yearlyRevenue / 12) * 12),
-    totalRevenue: totalRevenue,
+    mrr: Math.round(mrr),
+    arr: Math.round(arr),
     totalRevenue,
-    totalRevenue,
+    monthlyRevenue: totalRevenue,
+    yearlyRevenue: totalRevenue,
     planBreakdown: {
       free: { count: free.length, revenue: 0 },
       starter: { count: activeSubs.filter((s) => s.subscription.plan === "starter").length, revenue: activeSubs.filter((s) => s.subscription.plan === "starter").length * 999 },
